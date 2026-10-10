@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
   // находит страницы без дополнительных правил переписывания.
   trailingSlash: true,
   images: { unoptimized: true },
+  // Индикатор dev-сервера не должен закрывать кнопку «Пуск» в левом нижнем углу.
+  devIndicators: { position: "top-right" },
   experimental: {
     agentFeedback: true,
   },
