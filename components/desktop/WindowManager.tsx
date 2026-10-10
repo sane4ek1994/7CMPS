@@ -18,6 +18,7 @@ import {
   useRef,
   type ReactNode,
 } from "react";
+import { captionRect, setBusy, zoomCaption } from "@/lib/motion";
 
 export type WindowVariant = "explorer" | "document" | "dialog";
 
@@ -185,6 +186,7 @@ export function WindowManagerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const openRouteWindow = useCallback((meta: WindowMeta) => {
+    setBusy(false);
     dispatch({ type: "open", meta, route: true, focus: readyRef.current });
   }, []);
   const releaseRoute = useCallback((id: string) => dispatch({ type: "releaseRoute", id }), []);
@@ -196,6 +198,12 @@ export function WindowManagerProvider({ children }: { children: ReactNode }) {
   );
 
   const minimize = useCallback((id: string) => {
+    // Заголовок «улетает» в кнопку окна на панели задач.
+    zoomCaption(
+      captionRect(document.getElementById(windowDomId(id))),
+      captionRect(document.getElementById(`task-${windowDomId(id)}`)),
+      stateRef.current.windows[id]?.title,
+    );
     dispatch({ type: "minimize", id });
     // Кнопка «Свернуть» исчезает вместе с окном, поэтому фокус уходит на панель задач.
     requestAnimationFrame(() => document.getElementById(`task-${windowDomId(id)}`)?.focus());

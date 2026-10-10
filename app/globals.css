@@ -257,6 +257,34 @@ a:visited {
   transform: none;
 }
 
+/* ---------------------------------------------------------------- Motion */
+
+/* Пока загружается страница нового окна — курсор «песочные часы». */
+:root.is-busy,
+:root.is-busy * {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='32' viewBox='0 0 13 16' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h13v1h-13zM0 1h1v1h-1zM12 1h1v1h-1zM0 2h13v1h-13zM1 3h1v1h-1zM11 3h1v1h-1zM1 4h1v1h-1zM11 4h1v1h-1zM1 5h1v1h-1zM11 5h1v1h-1zM2 6h1v1h-1zM10 6h1v1h-1zM3 7h1v1h-1zM9 7h1v1h-1zM3 8h1v1h-1zM9 8h1v1h-1zM2 9h1v1h-1zM10 9h1v1h-1zM1 10h1v1h-1zM11 10h1v1h-1zM1 11h1v1h-1zM11 11h1v1h-1zM1 12h1v1h-1zM11 12h1v1h-1zM0 13h13v1h-13zM0 14h1v1h-1zM12 14h1v1h-1zM0 15h13v1h-13z' fill='%23000'/%3E%3Cpath d='M1 1h11v1h-11zM2 3h9v1h-9zM2 4h1v1h-1zM10 4h1v1h-1zM2 5h2v1h-2zM9 5h2v1h-2zM3 6h2v1h-2zM8 6h2v1h-2zM4 7h2v1h-2zM7 7h2v1h-2zM4 8h2v1h-2zM7 8h2v1h-2zM3 9h3v1h-3zM7 9h3v1h-3zM2 10h4v1h-4zM7 10h4v1h-4zM2 11h3v1h-3zM8 11h3v1h-3zM2 12h1v1h-1zM10 12h1v1h-1zM1 14h11v1h-11z' fill='%23fff'/%3E%3Cpath d='M3 4h7v1h-7zM4 5h5v1h-5zM5 6h3v1h-3zM6 7h1v1h-1zM6 8h1v1h-1zM6 9h1v1h-1zM6 10h1v1h-1zM5 11h3v1h-3zM3 12h7v1h-7z' fill='%23c89b3c'/%3E%3C/svg%3E")
+      13 16,
+    progress !important;
+}
+
+/* Заголовок окна, который «пролетает» при открытии, сворачивании и разворачивании. */
+.zoom-caption {
+  position: fixed;
+  z-index: 9000;
+  overflow: hidden;
+  padding: 0 6px;
+  background: var(--title-active);
+  color: #ffffff;
+  font-family: var(--font-title);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 22px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
 /* ---------------------------------------------------------------- Desktop */
 
 .desktop {
@@ -665,6 +693,20 @@ a:visited {
   padding: 3px;
   background: var(--face);
   box-shadow: var(--frame);
+}
+
+/* Меню выезжает снизу вверх рывками, как в старых системах. */
+@keyframes menu-slide {
+  from {
+    clip-path: inset(100% 0 0 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+
+.start-menu {
+  animation: menu-slide 160ms steps(6, end);
 }
 
 .start-menu__banner {
@@ -1519,7 +1561,12 @@ a:visited {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
