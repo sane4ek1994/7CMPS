@@ -16,7 +16,7 @@ export default function AboutPage() {
             <PixelIcon name="campus" size={64} />
             <p>
               <strong>{siteConfig.name}</strong> — open-source хаб студентов, которые учатся DevOps
-              на платформе «Просто DevOps». Первый поток проекта называется{" "}
+              на платформе «DevOps». Первый поток проекта называется{" "}
               <strong>«{siteConfig.shortName}»</strong>.
             </p>
           </div>
