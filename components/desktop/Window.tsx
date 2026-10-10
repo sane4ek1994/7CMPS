@@ -11,6 +11,15 @@ import {
   type ReactNode,
 } from "react";
 import { PixelIcon } from "@/components/pixel/PixelIcon";
+import {
+  captionRect,
+  hideDuring,
+  rememberOrigin,
+  setBusy,
+  takeOrigin,
+  zoomCaption,
+} from "@/lib/motion";
+import { TitleGlyph } from "./TitleGlyph";
 import { topVisibleId, useWindowManager, windowDomId, type WindowVariant } from "./WindowManager";
 
 const MOBILE_QUERY = "(max-width: 700px)";
@@ -38,16 +47,46 @@ export function Window({ id, title, icon, variant = "explorer", children, cached
   const sectionRef = useRef<HTMLElement>(null);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
   const dragRef = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
+  const zoomFromRef = useRef<DOMRect | null>(null);
 
   // Окно текущей страницы регистрирует себя до отрисовки кадра,
   // чтобы менеджер сразу знал его позицию и порядок.
   useLayoutEffect(() => {
     if (cached) return;
     openRouteWindow({ id, title, icon, variant, content: children });
+    // Окно открыто ссылкой: заголовок вылетает из иконки, по которой щёлкнули.
+    const from = takeOrigin(id);
+    if (from) {
+      const el = sectionRef.current;
+      hideDuring(el, zoomCaption(from, captionRect(el), title));
+    }
     return () => releaseRoute(id);
     // Содержимое страницы статично: перерегистрация нужна только при смене окна.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, cached, openRouteWindow, releaseRoute]);
+
+  const maximized = state?.maximized ?? false;
+  const minimized = state?.minimized ?? false;
+  const wasMinimizedRef = useRef(minimized);
+
+  // Восстановление из панели задач: заголовок летит от кнопки окна к самому окну.
+  useLayoutEffect(() => {
+    if (wasMinimizedRef.current && !minimized) {
+      const el = sectionRef.current;
+      const task = document.getElementById(`task-${windowDomId(id)}`);
+      hideDuring(el, zoomCaption(captionRect(task), captionRect(el), title));
+    }
+    wasMinimizedRef.current = minimized;
+  }, [minimized, id, title]);
+
+  // Разворачивание и восстановление: заголовок летит из старого положения окна в новое.
+  useLayoutEffect(() => {
+    const from = zoomFromRef.current;
+    zoomFromRef.current = null;
+    if (!from) return;
+    const el = sectionRef.current;
+    hideDuring(el, zoomCaption(from, captionRect(el), title));
+  }, [maximized, title]);
 
   if (!cached && wm.state.suppressed === id) return null;
 
@@ -56,7 +95,11 @@ export function Window({ id, title, icon, variant = "explorer", children, cached
   const zIndex = 10 + (state ? wm.state.zOrder.indexOf(id) : wm.state.zOrder.length);
   const active = state ? topVisibleId(wm.state) === id : true;
   const pos = dragPos ?? state?.pos ?? cascade(state?.seq ?? wm.state.nextSeq);
-  const maximized = state?.maximized ?? false;
+
+  const toggleMaximize = () => {
+    zoomFromRef.current = captionRect(sectionRef.current);
+    wm.toggleMaximize(id);
+  };
 
   const onPointerDownWindow = () => {
     if (state && !active) wm.focus(id);
@@ -92,7 +135,7 @@ export function Window({ id, title, icon, variant = "explorer", children, cached
 
   const onTitleDoubleClick = (event: MouseEvent<HTMLElement>) => {
     if ((event.target as HTMLElement).closest("button")) return;
-    if (!window.matchMedia(MOBILE_QUERY).matches) wm.toggleMaximize(id);
+    if (!window.matchMedia(MOBILE_QUERY).matches) toggleMaximize();
   };
 
   const style = {
@@ -113,7 +156,7 @@ export function Window({ id, title, icon, variant = "explorer", children, cached
         dragPos ? "is-dragging" : "",
       ].join(" ")}
       style={style}
-      hidden={state?.minimized}
+      hidden={minimized}
       aria-labelledby={titleId}
       tabIndex={-1}
       onPointerDown={onPointerDownWindow}
@@ -139,20 +182,21 @@ export function Window({ id, title, icon, variant = "explorer", children, cached
             onClick={() => wm.minimize(id)}
             disabled={!state}
           >
-            <span className="glyph glyph--min" aria-hidden="true" />
+            <span className="title-button__face">
+              <TitleGlyph name="minimize" />
+            </span>
           </button>
           <button
             type="button"
             className="title-button title-button--max"
             aria-label={maximized ? `Восстановить окно «${title}»` : `Развернуть окно «${title}»`}
             title={maximized ? "Восстановить" : "Развернуть"}
-            onClick={() => wm.toggleMaximize(id)}
+            onClick={toggleMaximize}
             disabled={!state}
           >
-            <span
-              className={`glyph ${maximized ? "glyph--restore" : "glyph--max"}`}
-              aria-hidden="true"
-            />
+            <span className="title-button__face">
+              <TitleGlyph name={maximized ? "restore" : "maximize"} />
+            </span>
           </button>
           <button
             type="button"
@@ -162,7 +206,9 @@ export function Window({ id, title, icon, variant = "explorer", children, cached
             onClick={() => wm.close(id)}
             disabled={!state}
           >
-            <span className="glyph glyph--close" aria-hidden="true" />
+            <span className="title-button__face">
+              <TitleGlyph name="close" />
+            </span>
           </button>
         </div>
       </header>
@@ -223,7 +269,11 @@ export function OpenLink({
         if (wm.state.windows[href]) {
           event.preventDefault();
           wm.focus(href);
+          return;
         }
+        // Новое окно: запоминаем, откуда его открыли, и показываем «песочные часы».
+        rememberOrigin(href, event.currentTarget.querySelector("svg") ?? event.currentTarget);
+        setBusy(true);
       }}
       {...rest}
     >

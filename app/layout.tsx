@@ -1,13 +1,24 @@
 import type { Metadata, Viewport } from "next";
+import { Pixelify_Sans } from "next/font/google";
 import { DesktopIcons, type DesktopItem } from "@/components/desktop/DesktopIcons";
 import { SkipToWindow, Taskbar, type StartMenuItem } from "@/components/desktop/Taskbar";
+import { SystemLayer } from "@/components/desktop/SystemLayer";
 import { CachedWindows } from "@/components/desktop/Window";
 import { WindowManagerProvider } from "@/components/desktop/WindowManager";
 import { PixelText } from "@/components/pixel/PixelText";
 import { getCohorts } from "@/lib/content";
+import { bootInitScript } from "@/lib/boot-script";
 import { themeInitScript } from "@/lib/theme-script";
 import { repoUrl, siteConfig } from "@/site.config";
 import "./globals.css";
+
+// Пиксельный шрифт для заголовков окон, кнопки «Пуск» и системных экранов.
+// next/font кладёт файлы шрифта рядом с сайтом, запросов к Google из браузера нет.
+const pixelFont = Pixelify_Sans({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-pixel",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -48,13 +59,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     },
     { label: "Репозиторий на GitHub", href: repoUrl, icon: "globe", external: true },
     { label: "О проекте", href: "/about/", icon: "info", separatorBefore: true },
+    {
+      label: "Заставка «Звёзды»",
+      action: "screensaver",
+      icon: "screensaver",
+      separatorBefore: true,
+    },
+    { label: "Завершение работы…", action: "shutdown", icon: "power" },
   ];
 
   return (
-    // data-theme меняет инлайн-скрипт до гидратации, поэтому расхождение атрибута ожидаемо.
-    <html lang="ru" data-theme="light" suppressHydrationWarning>
+    // data-theme и data-boot ставит инлайн-скрипт до гидратации, поэтому расхождение ожидаемо.
+    <html lang="ru" data-theme="light" className={pixelFont.variable} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: `${themeInitScript};${bootInitScript}` }} />
       </head>
       <body>
         <WindowManagerProvider>
@@ -74,6 +92,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </main>
           </div>
           <Taskbar startItems={startItems} />
+          <SystemLayer />
         </WindowManagerProvider>
       </body>
     </html>
