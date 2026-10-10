@@ -1,3 +1,4 @@
+import { Comments } from "@/components/Comments";
 import { OpenLink, Window } from "@/components/desktop/Window";
 import { PixelIcon } from "@/components/pixel/PixelIcon";
 import { getCohort, getTopic } from "@/lib/content";
@@ -128,6 +129,13 @@ export function MaterialView({ material, html }: { material: Material; html: str
             </dl>
             <div className="markdown" dangerouslySetInnerHTML={{ __html: html }} />
           </article>
+          <section className="comments" aria-labelledby={`comments-${material.id}`}>
+            <h3 className="comments__title" id={`comments-${material.id}`}>
+              <PixelIcon name="chat" size={24} />
+              Обсуждение
+            </h3>
+            <Comments term={material.id} title={material.title} />
+          </section>
         </div>
         <div className="statusbar">
           <span>{material.filePath}</span>
