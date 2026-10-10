@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { PixelIcon } from "@/components/pixel/PixelIcon";
+import { ThemeToggle } from "./ThemeToggle";
 import { OpenLink } from "./Window";
 import { topVisibleId, useWindowManager, windowDomId } from "./WindowManager";
 
@@ -24,8 +25,14 @@ function Clock() {
   const time = now?.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }) ?? "--:--";
   const date = now?.toLocaleDateString("ru-RU", { dateStyle: "full" });
   return (
-    <div className="tray" title={date}>
-      <time className="tray__clock" dateTime={now?.toISOString()} aria-label={`Время: ${time}`}>
+    <div className="tray">
+      <ThemeToggle />
+      <time
+        className="tray__clock"
+        title={date}
+        dateTime={now?.toISOString()}
+        aria-label={`Время: ${time}`}
+      >
         {time}
       </time>
     </div>

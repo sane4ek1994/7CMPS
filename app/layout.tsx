@@ -5,6 +5,7 @@ import { CachedWindows } from "@/components/desktop/Window";
 import { WindowManagerProvider } from "@/components/desktop/WindowManager";
 import { PixelText } from "@/components/pixel/PixelText";
 import { getCohorts } from "@/lib/content";
+import { themeInitScript } from "@/lib/theme-script";
 import { repoUrl, siteConfig } from "@/site.config";
 import "./globals.css";
 
@@ -50,7 +51,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   ];
 
   return (
-    <html lang="ru">
+    // data-theme меняет инлайн-скрипт до гидратации, поэтому расхождение атрибута ожидаемо.
+    <html lang="ru" data-theme="light" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body>
         <WindowManagerProvider>
           <SkipToWindow />

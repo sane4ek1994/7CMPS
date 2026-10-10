@@ -2,6 +2,7 @@
 
 import Giscus from "@giscus/react";
 import { PixelIcon } from "@/components/pixel/PixelIcon";
+import { useTheme } from "@/lib/theme";
 import { isGiscusConfigured, repoUrl, siteConfig } from "@/site.config";
 
 /**
@@ -10,6 +11,8 @@ import { isGiscusConfigured, repoUrl, siteConfig } from "@/site.config";
  * окно может оставаться открытым, когда адрес в браузере уже другой.
  */
 export function Comments({ term, title }: { term: string; title?: string }) {
+  const theme = useTheme();
+
   if (!isGiscusConfigured) {
     return (
       <div className="notice" role="note">
@@ -49,7 +52,7 @@ export function Comments({ term, title }: { term: string; title?: string }) {
         reactionsEnabled="1"
         emitMetadata="0"
         inputPosition="top"
-        theme="light"
+        theme={theme === "dark" ? "dark" : "light"}
         lang="ru"
         loading="lazy"
       />

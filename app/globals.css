@@ -18,6 +18,17 @@
   --link: #0b3cc1;
   --link-visited: #5a1f9a;
   --focus: #ffd400;
+  --paper: #ffffff;
+  --muted: #4a4a4a;
+  --heading: #000080;
+  --rule: #ececec;
+  --row-hover: #eef3fb;
+  --info-tint: #eef3fb;
+  --note-bg: #ffffe1;
+  --code-bg: #f1f1f1;
+  --code-border: #e0e0e0;
+  --pre-bg: #101010;
+  --table-border: #b8b8b8;
   --taskbar-h: 40px;
 
   --font-ui:
@@ -39,6 +50,36 @@
   --field: inset -1px -1px var(--highlight), inset 1px 1px var(--shadow);
 
   color-scheme: light;
+}
+
+/* Тёмная тема: та же геометрия рамок, приглушённая палитра.
+   Включается атрибутом data-theme="dark" на <html> (см. app/layout.tsx). */
+:root[data-theme="dark"] {
+  --desktop: #123c44;
+  --face: #3b3c45;
+  --highlight: #6e7080;
+  --light: #50525d;
+  --shadow: #24252b;
+  --dark: #08080a;
+  --text: #ececf1;
+  --title-active: linear-gradient(90deg, #0a1f66, #2456b8);
+  --title-inactive: linear-gradient(90deg, #2b2c33, #4a4c56);
+  --select: #2f5fd0;
+  --link: #8db8ff;
+  --link-visited: #c9a2ff;
+  --paper: #18191f;
+  --muted: #b4b6c2;
+  --heading: #9fc2ff;
+  --rule: #2a2b33;
+  --row-hover: #252b3d;
+  --info-tint: #1d2333;
+  --note-bg: #34301b;
+  --code-bg: #262730;
+  --code-border: #3a3b46;
+  --pre-bg: #0b0b0e;
+  --table-border: #4a4c58;
+
+  color-scheme: dark;
 }
 
 *,
@@ -270,8 +311,8 @@ a:visited {
   display: flex;
   align-items: center;
   gap: 6px;
-  min-height: 24px;
-  padding: 2px 3px 2px 4px;
+  min-height: 28px;
+  padding: 2px 2px 2px 4px;
   background: var(--title-inactive);
   color: var(--text);
   cursor: default;
@@ -308,8 +349,9 @@ a:visited {
 .title-button {
   display: grid;
   place-items: center;
-  width: 20px;
-  height: 18px;
+  /* 24×24 — минимальный размер цели для указателя (WCAG 2.5.8) */
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: 0;
   background: var(--face);
@@ -497,6 +539,31 @@ a:visited {
   font-variant-numeric: tabular-nums;
 }
 
+.tray {
+  gap: 6px;
+  padding-left: 4px;
+}
+
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  box-shadow: var(--raised-soft);
+}
+
+.theme-toggle:active {
+  box-shadow: var(--field);
+}
+
 /* ---------------------------------------------------------------- Start menu */
 
 .start-menu {
@@ -596,7 +663,7 @@ a:visited {
   gap: 6px;
   height: 26px;
   padding: 0 6px;
-  background: #ffffff;
+  background: var(--paper);
   box-shadow: var(--sunken);
   font-family: var(--font-mono);
   font-size: 12px;
@@ -629,7 +696,7 @@ a:visited {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  background: #ffffff;
+  background: var(--paper);
   box-shadow: var(--sunken);
   padding: 2px;
 }
@@ -638,7 +705,7 @@ a:visited {
   display: inline-block;
   padding: 0 5px;
   border: 1px solid var(--shadow);
-  background: #ffffe1;
+  background: var(--note-bg);
   font-size: 12px;
   line-height: 18px;
   white-space: nowrap;
@@ -660,7 +727,7 @@ a:visited {
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(160px, 220px) 1fr;
-  background: #ffffff;
+  background: var(--paper);
   box-shadow: var(--sunken);
   padding: 2px;
 }
@@ -669,7 +736,7 @@ a:visited {
   overflow: auto;
   padding: 14px 14px 18px;
   border-right: 1px solid var(--light);
-  background: linear-gradient(180deg, #ffffff 0, #ffffff 60%, #eef3fb 100%);
+  background: linear-gradient(180deg, var(--paper) 0, var(--paper) 60%, var(--info-tint) 100%);
 }
 
 .explorer__info-icon {
@@ -681,7 +748,7 @@ a:visited {
   margin: 0 0 6px;
   font-size: 22px;
   line-height: 1.15;
-  color: var(--navy);
+  color: var(--heading);
 }
 
 .explorer__info-rule {
@@ -712,7 +779,7 @@ a:visited {
 .explorer__section-title {
   margin: 10px 10px 4px;
   font-size: 13px;
-  color: #404040;
+  color: var(--muted);
 }
 
 .icon-grid {
@@ -747,7 +814,7 @@ a:visited {
 
 .icon-grid__meta {
   font-size: 12px;
-  color: #4a4a4a;
+  color: var(--muted);
 }
 
 .icon-grid__item:hover .icon-grid__label,
@@ -777,11 +844,11 @@ a:visited {
 .file-table td {
   padding: 5px 8px;
   vertical-align: top;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--rule);
 }
 
 .file-table tbody tr:hover {
-  background: #eef3fb;
+  background: var(--row-hover);
 }
 
 .file-name {
@@ -817,7 +884,7 @@ a:visited {
   -webkit-line-clamp: 2;
   overflow: hidden;
   margin-top: 2px;
-  color: #4a4a4a;
+  color: var(--muted);
   font-size: 12px;
 }
 
@@ -829,7 +896,7 @@ a:visited {
   margin: 16px;
   padding: 12px;
   border: 1px dashed var(--shadow);
-  background: #fffff0;
+  background: var(--note-bg);
 }
 
 /* ---------------------------------------------------------------- Document */
@@ -845,7 +912,7 @@ a:visited {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  background: #ffffff;
+  background: var(--paper);
   box-shadow: var(--sunken);
   padding: 2px;
 }
@@ -863,7 +930,7 @@ a:visited {
   align-items: center;
   gap: 8px;
   margin: 0 0 6px;
-  color: #404040;
+  color: var(--muted);
   font-size: 13px;
 }
 
@@ -871,7 +938,7 @@ a:visited {
   margin: 0 0 14px;
   font-size: 30px;
   line-height: 1.2;
-  color: var(--navy);
+  color: var(--heading);
 }
 
 .properties {
@@ -887,7 +954,7 @@ a:visited {
 }
 
 .properties dt {
-  color: #303030;
+  color: var(--muted);
 }
 
 .properties dd {
@@ -907,7 +974,7 @@ a:visited {
 .markdown h6 {
   margin: 1.6em 0 0.5em;
   line-height: 1.25;
-  color: var(--navy);
+  color: var(--heading);
 }
 
 .markdown h3 {
@@ -950,8 +1017,8 @@ a:visited {
 
 .markdown blockquote {
   padding: 8px 14px;
-  border-left: 4px solid var(--navy);
-  background: #ffffe1;
+  border-left: 4px solid var(--heading);
+  background: var(--note-bg);
 }
 
 .markdown blockquote > :last-child {
@@ -960,8 +1027,8 @@ a:visited {
 
 .markdown code {
   padding: 1px 4px;
-  background: #f1f1f1;
-  border: 1px solid #e0e0e0;
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
   font-family: var(--font-mono);
   font-size: 0.88em;
 }
@@ -969,7 +1036,7 @@ a:visited {
 .markdown pre {
   overflow: auto;
   padding: 12px 14px;
-  background: #101010;
+  background: var(--pre-bg);
   color: #e6e6e6;
   box-shadow: var(--sunken);
   font-size: 14px;
@@ -997,7 +1064,7 @@ a:visited {
 .markdown th,
 .markdown td {
   padding: 6px 10px;
-  border: 1px solid #b8b8b8;
+  border: 1px solid var(--table-border);
   text-align: left;
   vertical-align: top;
 }
@@ -1067,7 +1134,7 @@ a:visited {
   padding-top: 18px;
   border-top: 2px solid var(--face);
   font-size: 18px;
-  color: var(--navy);
+  color: var(--heading);
 }
 
 .notice {
@@ -1133,7 +1200,7 @@ a:visited {
 
 .giscus-frame-wrap {
   padding: 8px;
-  background: #ffffff;
+  background: var(--paper);
   box-shadow: var(--sunken);
 }
 
@@ -1147,7 +1214,7 @@ a:visited {
 
 .about h3 {
   margin: 18px 0 6px;
-  color: var(--navy);
+  color: var(--heading);
   font-size: 16px;
 }
 
@@ -1224,6 +1291,11 @@ a:visited {
     height: 38px;
   }
 
+  .theme-toggle {
+    width: 34px;
+    height: 34px;
+  }
+
   .task-button {
     flex-basis: 44px;
   }
@@ -1293,7 +1365,7 @@ a:visited {
 
   .file-table tr {
     padding: 8px 6px;
-    border-bottom: 1px solid #e6e6e6;
+    border-bottom: 1px solid var(--rule);
   }
 
   .file-table td {
@@ -1304,7 +1376,7 @@ a:visited {
   .file-table td.col-meta {
     display: inline;
     padding-left: 0;
-    color: #4a4a4a;
+    color: var(--muted);
     font-size: 12px;
   }
 
