@@ -2,8 +2,21 @@
 
 import { useEffect } from "react";
 import { PixelText } from "@/components/pixel/PixelText";
+import { sounds } from "@/lib/sound";
 
 const endBoot = () => document.documentElement.removeAttribute("data-boot");
+
+/**
+ * Пропуск загрузки щелчком или клавишей. При первой загрузке страницы браузер не даёт
+ * играть звук до действия пользователя, поэтому мелодия включения звучит здесь.
+ * После перезагрузки из меню она уже прозвучала (data-boot="sound").
+ */
+function skipBoot() {
+  const boot = document.documentElement.getAttribute("data-boot");
+  if (boot === null) return;
+  endBoot();
+  if (boot !== "sound") sounds.startup();
+}
 
 /**
  * Загрузочный экран. Разметка есть на каждой странице, но видна, только если
@@ -12,16 +25,15 @@ const endBoot = () => document.documentElement.removeAttribute("data-boot");
  */
 export function BootScreen() {
   useEffect(() => {
-    if (!document.documentElement.hasAttribute("data-boot")) return;
-    window.addEventListener("keydown", endBoot, { once: true });
-    return () => window.removeEventListener("keydown", endBoot);
+    window.addEventListener("keydown", skipBoot);
+    return () => window.removeEventListener("keydown", skipBoot);
   }, []);
 
   return (
     <div
       className="boot"
       aria-hidden="true"
-      onPointerDown={endBoot}
+      onPointerDown={skipBoot}
       onAnimationEnd={(event) => {
         if (event.animationName === "boot-out") endBoot();
       }}

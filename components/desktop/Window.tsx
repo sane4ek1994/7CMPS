@@ -19,6 +19,7 @@ import {
   takeOrigin,
   zoomCaption,
 } from "@/lib/motion";
+import { sounds } from "@/lib/sound";
 import { TitleGlyph } from "./TitleGlyph";
 import { topVisibleId, useWindowManager, windowDomId, type WindowVariant } from "./WindowManager";
 
@@ -57,6 +58,7 @@ export function Window({ id, title, icon, variant = "explorer", children, cached
     // Окно открыто ссылкой: заголовок вылетает из иконки, по которой щёлкнули.
     const from = takeOrigin(id);
     if (from) {
+      sounds.open();
       const el = sectionRef.current;
       hideDuring(el, zoomCaption(from, captionRect(el), title));
     }
@@ -72,6 +74,7 @@ export function Window({ id, title, icon, variant = "explorer", children, cached
   // Восстановление из панели задач: заголовок летит от кнопки окна к самому окну.
   useLayoutEffect(() => {
     if (wasMinimizedRef.current && !minimized) {
+      sounds.maximize();
       const el = sectionRef.current;
       const task = document.getElementById(`task-${windowDomId(id)}`);
       hideDuring(el, zoomCaption(captionRect(task), captionRect(el), title));
@@ -97,6 +100,8 @@ export function Window({ id, title, icon, variant = "explorer", children, cached
   const pos = dragPos ?? state?.pos ?? cascade(state?.seq ?? wm.state.nextSeq);
 
   const toggleMaximize = () => {
+    if (maximized) sounds.minimize();
+    else sounds.maximize();
     zoomFromRef.current = captionRect(sectionRef.current);
     wm.toggleMaximize(id);
   };

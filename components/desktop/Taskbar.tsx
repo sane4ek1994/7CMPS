@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { PixelIcon } from "@/components/pixel/PixelIcon";
+import { sounds } from "@/lib/sound";
 import { setSystemMode, type SystemAction } from "@/lib/system";
+import { SoundToggle } from "./SoundToggle";
 import { ThemeToggle } from "./ThemeToggle";
 import { OpenLink } from "./Window";
 import { topVisibleId, useWindowManager, windowDomId } from "./WindowManager";
@@ -29,6 +31,7 @@ function Clock() {
   const date = now?.toLocaleDateString("ru-RU", { dateStyle: "full" });
   return (
     <div className="tray">
+      <SoundToggle />
       <ThemeToggle />
       <time
         className="tray__clock"
@@ -91,6 +94,7 @@ function StartMenu({ items, onClose }: { items: StartMenuItem[]; onClose: () => 
                 role="menuitem"
                 onClick={() => {
                   onClose();
+                  if (item.action === "shutdown") sounds.dialog();
                   setSystemMode(item.action);
                 }}
               >
@@ -150,7 +154,10 @@ export function Taskbar({ startItems }: { startItems: StartMenuItem[] }) {
           aria-haspopup="menu"
           aria-expanded={menuOpen}
           aria-controls={menuOpen ? "start-menu" : undefined}
-          onClick={() => setMenuOpen((open) => !open)}
+          onClick={() => {
+            if (!menuOpen) sounds.menu();
+            setMenuOpen(!menuOpen);
+          }}
         >
           <PixelIcon name="campus" size={18} />
           <span>Пуск</span>

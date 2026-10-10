@@ -19,6 +19,7 @@ import {
   type ReactNode,
 } from "react";
 import { captionRect, setBusy, zoomCaption } from "@/lib/motion";
+import { sounds } from "@/lib/sound";
 
 export type WindowVariant = "explorer" | "document" | "dialog";
 
@@ -57,7 +58,8 @@ type Action =
   | { type: "toggleMaximize"; id: string }
   | { type: "close"; id: string }
   | { type: "move"; id: string; pos: { x: number; y: number } }
-  | { type: "releaseRoute"; id: string };
+  | { type: "releaseRoute"; id: string }
+  | { type: "reset" };
 
 const toFront = (order: string[], id: string) => [...order.filter((x) => x !== id), id];
 
@@ -132,6 +134,8 @@ function reducer(state: State, action: Action): State {
     }
     case "releaseRoute":
       return state.routeId === action.id ? { ...state, routeId: null } : state;
+    case "reset":
+      return initialState;
   }
 }
 
@@ -153,6 +157,8 @@ interface WindowManagerApi {
   toggleMaximize: (id: string) => void;
   close: (id: string) => void;
   move: (id: string, pos: { x: number; y: number }) => void;
+  /** Закрыть все окна разом (перезагрузка). */
+  reset: () => void;
 }
 
 const WindowManagerContext = createContext<WindowManagerApi | null>(null);
@@ -197,7 +203,10 @@ export function WindowManagerProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const reset = useCallback(() => dispatch({ type: "reset" }), []);
+
   const minimize = useCallback((id: string) => {
+    sounds.minimize();
     // Заголовок «улетает» в кнопку окна на панели задач.
     zoomCaption(
       captionRect(document.getElementById(windowDomId(id))),
@@ -212,6 +221,7 @@ export function WindowManagerProvider({ children }: { children: ReactNode }) {
   const close = useCallback(
     (id: string) => {
       const wasRoute = stateRef.current.routeId === id;
+      sounds.close();
       dispatch({ type: "close", id });
       // Закрыли окно текущей страницы: адрес возвращается на рабочий стол,
       // чтобы обновление страницы не открыло окно снова.
@@ -242,8 +252,9 @@ export function WindowManagerProvider({ children }: { children: ReactNode }) {
       toggleMaximize,
       close,
       move,
+      reset,
     }),
-    [state, openRouteWindow, releaseRoute, focus, minimize, toggleMaximize, close, move],
+    [state, openRouteWindow, releaseRoute, focus, minimize, toggleMaximize, close, move, reset],
   );
 
   return <WindowManagerContext.Provider value={api}>{children}</WindowManagerContext.Provider>;

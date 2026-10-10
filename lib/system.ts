@@ -1,13 +1,21 @@
 "use client";
 
 // Состояние «системы» поверх рабочего стола: диалог завершения работы,
-// экран выключения и заставка. Хранится вне React, чтобы меню «Пуск»
-// и слой с экранами могли менять его, не зная друг о друге.
+// экраны выключения и перезагрузки, заставка. Хранится вне React, чтобы меню
+// «Пуск» и слой с экранами могли менять его, не зная друг о друге.
 
 import { useSyncExternalStore } from "react";
-import { BOOT_STORAGE_KEY } from "./boot-script";
 
-export type SystemMode = "desktop" | "shutdown" | "off" | "screensaver";
+export type SystemMode =
+  | "desktop"
+  | "shutdown"
+  /** «Подождите, идёт завершение работы…», затем экран выключения. */
+  | "off"
+  /** «Подождите, идёт завершение работы…», затем загрузка. */
+  | "restart"
+  /** Загрузка: окна закрываются, показывается загрузочный экран. */
+  | "boot"
+  | "screensaver";
 /** Пункты меню «Пуск», которые не открывают окно, а запускают действие. */
 export type SystemAction = "shutdown" | "screensaver";
 
@@ -33,17 +41,4 @@ export function useSystemMode(): SystemMode {
     () => mode,
     () => "desktop",
   );
-}
-
-/** «Перезагрузка»: чистый рабочий стол и загрузочный экран, как после включения. */
-export function reboot() {
-  try {
-    sessionStorage.removeItem(BOOT_STORAGE_KEY);
-  } catch {
-    // Хранилище недоступно: перезагрузимся без загрузочного экрана.
-  }
-  // Нужна именно полная перезагрузка: она закрывает все окна и заново запускает
-  // инлайн-скрипт загрузочного экрана. Переход роутером оставил бы окна открытыми.
-  // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-  window.location.assign("/");
 }

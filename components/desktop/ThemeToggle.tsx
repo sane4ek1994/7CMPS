@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { PixelIcon } from "@/components/pixel/PixelIcon";
+import { sounds } from "@/lib/sound";
 import { applyTheme, hasStoredTheme, useTheme } from "@/lib/theme";
 
 /** Кнопка в системном трее: переключает светлую и тёмную тему. */
@@ -26,7 +27,10 @@ export function ThemeToggle() {
       aria-pressed={dark}
       aria-label="Тёмная тема"
       title={dark ? "Включить светлую тему" : "Включить тёмную тему"}
-      onClick={() => applyTheme(dark ? "light" : "dark", true)}
+      onClick={() => {
+        sounds.click();
+        applyTheme(dark ? "light" : "dark", true);
+      }}
     >
       <PixelIcon name={dark ? "sun" : "moon"} size={18} />
     </button>

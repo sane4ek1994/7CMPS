@@ -1,7 +1,9 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { prefersReducedMotion } from "@/lib/motion";
+import { sounds } from "@/lib/sound";
 import { setSystemMode, useSystemMode } from "@/lib/system";
 import { BootScreen } from "./BootScreen";
 import { Screensaver } from "./Screensaver";
@@ -14,8 +16,19 @@ const IDLE_MS = 90_000;
 /** Системные экраны поверх рабочего стола: загрузка, завершение работы, заставка. */
 export function SystemLayer() {
   const mode = useSystemMode();
-  const { state } = useWindowManager();
+  const { state, reset } = useWindowManager();
+  const router = useRouter();
   const desktopEmptyRef = useRef(true);
+
+  // Загрузка без перезагрузки страницы: так браузер разрешает сыграть мелодию включения.
+  useEffect(() => {
+    if (mode !== "boot") return;
+    reset();
+    router.replace("/", { scroll: false });
+    if (!prefersReducedMotion()) document.documentElement.setAttribute("data-boot", "sound");
+    sounds.startup();
+    setSystemMode("desktop");
+  }, [mode, reset, router]);
 
   useEffect(() => {
     desktopEmptyRef.current = topVisibleId(state) === null;
@@ -50,7 +63,7 @@ export function SystemLayer() {
     <>
       <BootScreen />
       {mode === "shutdown" && <ShutdownDialog />}
-      {mode === "off" && <PowerOffScreen />}
+      {(mode === "off" || mode === "restart") && <PowerOffScreen then={mode} />}
       {mode === "screensaver" && <Screensaver />}
     </>
   );
