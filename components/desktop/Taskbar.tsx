@@ -2,17 +2,20 @@
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { PixelIcon } from "@/components/pixel/PixelIcon";
+import { setSystemMode, type SystemAction } from "@/lib/system";
 import { ThemeToggle } from "./ThemeToggle";
 import { OpenLink } from "./Window";
 import { topVisibleId, useWindowManager, windowDomId } from "./WindowManager";
 
-export interface StartMenuItem {
+/** Пункт меню «Пуск»: ссылка на окно или внешнюю страницу либо системное действие. */
+export type StartMenuItem = {
   label: string;
-  href: string;
   icon: string;
-  external?: boolean;
   separatorBefore?: boolean;
-}
+} & (
+  | { href: string; external?: boolean; action?: never }
+  | { action: SystemAction; href?: never; external?: never }
+);
 
 function Clock() {
   const [now, setNow] = useState<Date | null>(null);
@@ -78,11 +81,23 @@ function StartMenu({ items, onClose }: { items: StartMenuItem[]; onClose: () => 
       >
         {items.map((item) => (
           <li
-            key={item.href}
+            key={item.href ?? item.action}
             role="none"
             className={item.separatorBefore ? "start-menu__item has-separator" : "start-menu__item"}
           >
-            {item.external ? (
+            {item.action ? (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  onClose();
+                  setSystemMode(item.action);
+                }}
+              >
+                <PixelIcon name={item.icon} size={24} />
+                <span>{item.label}</span>
+              </button>
+            ) : item.external ? (
               <a
                 role="menuitem"
                 href={item.href}

@@ -746,17 +746,25 @@ a:visited {
   box-shadow: inset 0 1px var(--highlight);
 }
 
-.start-menu__item a {
+.start-menu__item a,
+.start-menu__item button {
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
   padding: 6px 14px 6px 8px;
+  border: 0;
+  background: none;
   color: var(--text);
+  text-align: left;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .start-menu__item a:hover,
-.start-menu__item a:focus-visible {
+.start-menu__item a:focus-visible,
+.start-menu__item button:hover,
+.start-menu__item button:focus-visible {
   background: var(--select);
   color: #ffffff;
   outline: none;
@@ -1382,6 +1390,259 @@ a:visited {
 
 .about__hero p {
   margin: 0;
+}
+
+/* ---------------------------------------------------------------- System screens */
+
+/* Кнопка по умолчанию в диалоге обведена тёмной рамкой. */
+.btn--default {
+  box-shadow:
+    0 0 0 1px var(--dark),
+    var(--raised);
+}
+
+.btn--default:active {
+  box-shadow:
+    0 0 0 1px var(--dark),
+    var(--pressed);
+}
+
+/* Радиокнопка: круглая «лунка» с точкой. */
+.radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  cursor: pointer;
+}
+
+.radio input {
+  appearance: none;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow:
+    inset 1px 1px var(--shadow),
+    inset -1px -1px var(--highlight),
+    inset 2px 2px var(--dark),
+    inset -2px -2px var(--light);
+  cursor: pointer;
+}
+
+.radio input:checked {
+  background: radial-gradient(circle, var(--text) 0 2.5px, var(--paper) 3px);
+}
+
+.radio input:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 1px 1px var(--shadow),
+    inset -1px -1px var(--highlight),
+    inset 2px 2px var(--dark),
+    inset -2px -2px var(--light),
+    0 0 0 3px var(--focus);
+}
+
+.radio input:focus-visible + span {
+  outline: 1px dotted var(--text);
+  outline-offset: 1px;
+}
+
+/* Затемнение экрана сеткой из точек и диалог по центру. */
+.shutdown {
+  position: fixed;
+  inset: 0;
+  z-index: 15000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: repeating-conic-gradient(rgb(0 0 0 / 0.6) 0 25%, transparent 0 50%) 0 0 / 2px 2px;
+}
+
+.dialog {
+  width: min(420px, 100%);
+  padding: 3px;
+  background: var(--face);
+  box-shadow: var(--frame);
+}
+
+.dialog .window__titlebar {
+  background: var(--title-active);
+  color: #ffffff;
+}
+
+.dialog__body {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 16px;
+  padding: 16px 14px 12px;
+}
+
+.dialog__icon {
+  grid-row: span 2;
+}
+
+.dialog__choices {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.dialog__choices legend {
+  margin-bottom: 8px;
+  padding: 0;
+}
+
+.dialog__buttons {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.dialog__buttons .btn {
+  min-width: 84px;
+  justify-content: center;
+}
+
+/* Загрузочный экран: виден, только пока на <html> стоит data-boot. */
+.boot {
+  display: none;
+}
+
+:root[data-boot] .boot {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  background: radial-gradient(ellipse at 50% 42%, #1d3f96 0%, #0a1a5c 45%, #000033 100%);
+  color: #ffffff;
+  cursor: progress;
+  animation: boot-out 360ms steps(4, end) 2400ms forwards;
+}
+
+@keyframes boot-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+.boot__logo,
+.power-off__logo {
+  width: min(86vw, 560px);
+  height: auto;
+}
+
+.boot__name {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 26px;
+  letter-spacing: 0.12em;
+}
+
+.boot__status {
+  margin: 18px 0 0;
+  color: #c8d2ff;
+  font-size: 14px;
+}
+
+/* Точки «...» появляются по одной. */
+.boot__dots {
+  display: inline-block;
+  width: 3ch;
+  overflow: hidden;
+  vertical-align: bottom;
+  animation: boot-dots 1.2s steps(4, jump-none) infinite;
+}
+
+@keyframes boot-dots {
+  from {
+    width: 0;
+  }
+  to {
+    width: 3ch;
+  }
+}
+
+/* Бегущая радужная полоса внизу экрана, как при загрузке систем тех лет. */
+.boot__bar {
+  position: absolute;
+  inset: auto 0 0;
+  height: 12px;
+  background: linear-gradient(90deg, #c00000, #ffb400, #1a9c3a, #1060c0, #7b3fa0, #c00000) 0 0 / 50%
+    100% repeat-x;
+  animation: boot-bar 1.4s linear infinite;
+}
+
+@keyframes boot-bar {
+  to {
+    background-position: 100% 0;
+  }
+}
+
+.power-off {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 16px;
+  text-align: center;
+  outline: none;
+}
+
+.power-off--closing {
+  background: radial-gradient(ellipse at 50% 42%, #1d3f96 0%, #0a1a5c 45%, #000033 100%);
+  color: #ffffff;
+  cursor: progress;
+}
+
+.power-off--off {
+  background: #000000;
+  cursor: pointer;
+}
+
+.power-off__wait {
+  margin: 0;
+  font-size: 16px;
+}
+
+.power-off__text {
+  margin: 0;
+  color: #ff9a1f;
+  font-family: var(--font-title);
+  font-size: clamp(22px, 4.5vw, 40px);
+  line-height: 1.25;
+}
+
+.power-off__hint {
+  margin: 0;
+  color: #9a9a9a;
+  font-size: 13px;
+}
+
+.screensaver {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  width: 100%;
+  height: 100%;
+  background: #000000;
+  image-rendering: pixelated;
+  cursor: none;
 }
 
 /* ---------------------------------------------------------------- Mobile */
