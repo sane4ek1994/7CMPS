@@ -1,0 +1,10 @@
+.next/
+out/
+node_modules/
+public/files/
+package-lock.json
+# Материалы студентов проверяет markdownlint, а не Prettier
+cohorts/
+topics/
+projects/
+claude-code-prompt.md

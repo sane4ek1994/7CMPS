@@ -1,26 +1,46 @@
 {
-  "name": "7cmps",
+  "name": "devops-campus",
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "assets": "node scripts/sync-assets.mjs",
+    "predev": "npm run assets",
     "dev": "next dev",
+    "prebuild": "npm run assets",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "preview": "npx --yes serve out",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint:md": "markdownlint-cli2"
   },
   "dependencies": {
+    "@giscus/react": "^3.1.0",
+    "gray-matter": "^4.0.3",
     "next": "16.4.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "rehype-highlight": "^7.0.2",
+    "rehype-stringify": "^10.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.1.0"
   },
   "devDependencies": {
-    "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
-    "tailwindcss": "^4",
+    "eslint-config-prettier": "^10.1.8",
+    "markdownlint-cli2": "^0.23.3",
+    "prettier": "^3.9.10",
     "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=20.9"
   }
 }

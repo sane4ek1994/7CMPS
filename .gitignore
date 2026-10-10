@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# вложения материалов, копируются из cohorts/ topics/ projects/ при сборке
+/public/files/
+
+# netlify
+.netlify

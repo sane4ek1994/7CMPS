@@ -1,0 +1,25 @@
+# Настройки публикации на Netlify.
+# Сайт собирается как статический экспорт Next.js (`output: "export"`),
+# поэтому Netlify просто раздаёт готовую папку `out/` без серверных функций.
+
+[build]
+  command = "npm run build"
+  publish = "out"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Каждая страница уже лежит отдельным HTML-файлом (`/topics/docker/index.html`),
+# поэтому SPA-редирект «всё на index.html» не нужен: он спрятал бы настоящие
+# 404-ответы. Несуществующие адреса Netlify отдаёт из `out/404.html`.
+
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

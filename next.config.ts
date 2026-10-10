@@ -1,20 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Сайт целиком статический: `next build` кладёт готовые HTML/CSS/JS в `out/`,
+  // а Netlify раздаёт эту папку как есть. Сервер не нужен.
+  output: "export",
+  // `/topics/docker` -> `/topics/docker/index.html`: так статический хостинг
+  // находит страницы без дополнительных правил переписывания.
+  trailingSlash: true,
+  images: { unoptimized: true },
   experimental: {
     agentFeedback: true,
   },
-  cacheComponents: true,
-  partialPrefetching: true,
-  turbopack: {
-    rules: {
-      "*.css": {
-        loaders: ["@tailwindcss/turbopack"],
-        as: "*.css",
-      },
-    },
-  },
+  // Cache Components (PPR) несовместимы со статическим экспортом:
+  // `next build` падает с "PPR cannot be enabled in export mode".
 };
 
 export default nextConfig;
