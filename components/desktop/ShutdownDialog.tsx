@@ -1,9 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+  type SyntheticEvent,
+} from "react";
 import { PixelIcon } from "@/components/pixel/PixelIcon";
 import { PixelText } from "@/components/pixel/PixelText";
-import { reboot, setSystemMode } from "@/lib/system";
+import { sounds } from "@/lib/sound";
+import { setSystemMode } from "@/lib/system";
 import { TitleGlyph } from "./TitleGlyph";
 
 type Choice = "off" | "reboot" | "screensaver";
@@ -50,8 +58,8 @@ export function ShutdownDialog() {
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
-    if (choice === "reboot") reboot();
-    else setSystemMode(choice);
+    if (choice !== "screensaver") sounds.shutdown();
+    setSystemMode(choice === "reboot" ? "restart" : choice);
   };
 
   return (
@@ -113,19 +121,28 @@ export function ShutdownDialog() {
   );
 }
 
-/** Экран после завершения работы. Щелчок или клавиша «включают» кампус заново. */
-export function PowerOffScreen() {
+/**
+ * Завершение работы: «Подождите…», затем экран выключения или сразу загрузка.
+ * На экране выключения щелчок или клавиша «включают» кампус заново.
+ */
+export function PowerOffScreen({ then }: { then: "off" | "restart" }) {
   const [phase, setPhase] = useState<"closing" | "off">("closing");
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     ref.current?.focus();
-    const timer = setTimeout(() => setPhase("off"), 1600);
+    const timer = setTimeout(() => {
+      if (then === "restart") setSystemMode("boot");
+      else setPhase("off");
+    }, 1600);
     return () => clearTimeout(timer);
-  }, []);
+  }, [then]);
 
-  const powerOn = () => {
-    if (phase === "off") reboot();
+  const powerOn = (event: SyntheticEvent) => {
+    if (phase !== "off") return;
+    // Та же клавиша не должна сразу пропустить загрузочный экран, который сейчас появится.
+    event.stopPropagation();
+    setSystemMode("boot");
   };
 
   return (
