@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Pixelify_Sans } from "next/font/google";
 import { DesktopIcons, type DesktopItem } from "@/components/desktop/DesktopIcons";
 import { SkipToWindow, Taskbar, type StartMenuItem } from "@/components/desktop/Taskbar";
 import { CachedWindows } from "@/components/desktop/Window";
@@ -8,6 +9,14 @@ import { getCohorts } from "@/lib/content";
 import { themeInitScript } from "@/lib/theme-script";
 import { repoUrl, siteConfig } from "@/site.config";
 import "./globals.css";
+
+// Пиксельный шрифт для заголовков окон, кнопки «Пуск» и системных экранов.
+// next/font кладёт файлы шрифта рядом с сайтом, запросов к Google из браузера нет.
+const pixelFont = Pixelify_Sans({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-pixel",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -52,7 +61,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 
   return (
     // data-theme меняет инлайн-скрипт до гидратации, поэтому расхождение атрибута ожидаемо.
-    <html lang="ru" data-theme="light" suppressHydrationWarning>
+    <html lang="ru" data-theme="light" className={pixelFont.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

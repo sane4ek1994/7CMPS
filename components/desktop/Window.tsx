@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { PixelIcon } from "@/components/pixel/PixelIcon";
+import { TitleGlyph } from "./TitleGlyph";
 import { topVisibleId, useWindowManager, windowDomId, type WindowVariant } from "./WindowManager";
 
 const MOBILE_QUERY = "(max-width: 700px)";
@@ -139,7 +140,9 @@ export function Window({ id, title, icon, variant = "explorer", children, cached
             onClick={() => wm.minimize(id)}
             disabled={!state}
           >
-            <span className="glyph glyph--min" aria-hidden="true" />
+            <span className="title-button__face">
+              <TitleGlyph name="minimize" />
+            </span>
           </button>
           <button
             type="button"
@@ -149,10 +152,9 @@ export function Window({ id, title, icon, variant = "explorer", children, cached
             onClick={() => wm.toggleMaximize(id)}
             disabled={!state}
           >
-            <span
-              className={`glyph ${maximized ? "glyph--restore" : "glyph--max"}`}
-              aria-hidden="true"
-            />
+            <span className="title-button__face">
+              <TitleGlyph name={maximized ? "restore" : "maximize"} />
+            </span>
           </button>
           <button
             type="button"
@@ -162,7 +164,9 @@ export function Window({ id, title, icon, variant = "explorer", children, cached
             onClick={() => wm.close(id)}
             disabled={!state}
           >
-            <span className="glyph glyph--close" aria-hidden="true" />
+            <span className="title-button__face">
+              <TitleGlyph name="close" />
+            </span>
           </button>
         </div>
       </header>

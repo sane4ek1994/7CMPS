@@ -34,6 +34,7 @@
   --font-ui:
     system-ui, -apple-system, Roboto, "Noto Sans", "Helvetica Neue", "Liberation Sans", Arial,
     sans-serif;
+  --font-title: var(--font-pixel), var(--font-ui);
   --font-mono:
     ui-monospace, "SFMono-Regular", Menlo, "DejaVu Sans Mono", "Liberation Mono", monospace;
 
@@ -48,6 +49,19 @@
     inset -1px -1px var(--highlight), inset 1px 1px var(--shadow), inset -2px -2px var(--light),
     inset 2px 2px var(--dark);
   --field: inset -1px -1px var(--highlight), inset 1px 1px var(--shadow);
+  /* Рамка окна: снаружи светло-серая, внутри белая (у кнопок наоборот). */
+  --frame:
+    inset -1px -1px var(--dark), inset 1px 1px var(--light), inset -2px -2px var(--shadow),
+    inset 2px 2px var(--highlight);
+  --checker: repeating-conic-gradient(var(--face) 0 25%, var(--highlight) 0 50%) 0 0 / 2px 2px;
+
+  /* Пиксельные стрелки скроллбара, галочка и уголок для изменения размера окна. */
+  --arrow-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='4' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath d='M3 0h1v1h-1zM2 1h3v1h-3zM1 2h5v1h-5zM0 3h7v1h-7z' fill='%23000'/%3E%3C/svg%3E");
+  --arrow-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='4' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h7v1h-7zM1 1h5v1h-5zM2 2h3v1h-3zM3 3h1v1h-1z' fill='%23000'/%3E%3C/svg%3E");
+  --arrow-left: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='7' viewBox='0 0 4 7' shape-rendering='crispEdges'%3E%3Cpath d='M3 0h1v1h-1zM2 1h2v1h-2zM1 2h3v1h-3zM0 3h4v1h-4zM1 4h3v1h-3zM2 5h2v1h-2zM3 6h1v1h-1z' fill='%23000'/%3E%3C/svg%3E");
+  --arrow-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='7' viewBox='0 0 4 7' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h1v1h-1zM0 1h2v1h-2zM0 2h3v1h-3zM0 3h4v1h-4zM0 4h3v1h-3zM0 5h2v1h-2zM0 6h1v1h-1z' fill='%23000'/%3E%3C/svg%3E");
+  --check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='7' viewBox='0 0 7 7' shape-rendering='crispEdges'%3E%3Cpath d='M6 0h1v1h-1zM5 1h2v1h-2zM0 2h1v1h-1zM4 2h3v1h-3zM0 3h2v1h-2zM3 3h3v1h-3zM0 4h5v1h-5zM1 5h3v1h-3zM2 6h1v1h-1z' fill='%23000'/%3E%3C/svg%3E");
+  --grip: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' shape-rendering='crispEdges'%3E%3Cpath d='M11 0h1v1h-1zM10 1h1v1h-1zM9 2h1v1h-1zM8 3h1v1h-1zM7 4h1v1h-1zM11 4h1v1h-1zM6 5h1v1h-1zM10 5h1v1h-1zM5 6h1v1h-1zM9 6h1v1h-1zM4 7h1v1h-1zM8 7h1v1h-1zM3 8h1v1h-1zM7 8h1v1h-1zM11 8h1v1h-1zM2 9h1v1h-1zM6 9h1v1h-1zM10 9h1v1h-1zM1 10h1v1h-1zM5 10h1v1h-1zM9 10h1v1h-1zM0 11h1v1h-1zM4 11h1v1h-1zM8 11h1v1h-1z' fill='%23ffffff'/%3E%3Cpath d='M11 1h1v1h-1zM10 2h2v1h-2zM9 3h2v1h-2zM8 4h2v1h-2zM7 5h2v1h-2zM11 5h1v1h-1zM6 6h2v1h-2zM10 6h2v1h-2zM5 7h2v1h-2zM9 7h2v1h-2zM4 8h2v1h-2zM8 8h2v1h-2zM3 9h2v1h-2zM7 9h2v1h-2zM11 9h1v1h-1zM2 10h2v1h-2zM6 10h2v1h-2zM10 10h2v1h-2zM1 11h2v1h-2zM5 11h2v1h-2zM9 11h2v1h-2z' fill='%23808080'/%3E%3C/svg%3E");
 
   color-scheme: light;
 }
@@ -78,6 +92,13 @@
   --code-border: #3a3b46;
   --pre-bg: #0b0b0e;
   --table-border: #4a4c58;
+
+  --arrow-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='4' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath d='M3 0h1v1h-1zM2 1h3v1h-3zM1 2h5v1h-5zM0 3h7v1h-7z' fill='%23ececf1'/%3E%3C/svg%3E");
+  --arrow-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='4' viewBox='0 0 7 4' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h7v1h-7zM1 1h5v1h-5zM2 2h3v1h-3zM3 3h1v1h-1z' fill='%23ececf1'/%3E%3C/svg%3E");
+  --arrow-left: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='7' viewBox='0 0 4 7' shape-rendering='crispEdges'%3E%3Cpath d='M3 0h1v1h-1zM2 1h2v1h-2zM1 2h3v1h-3zM0 3h4v1h-4zM1 4h3v1h-3zM2 5h2v1h-2zM3 6h1v1h-1z' fill='%23ececf1'/%3E%3C/svg%3E");
+  --arrow-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='7' viewBox='0 0 4 7' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h1v1h-1zM0 1h2v1h-2zM0 2h3v1h-3zM0 3h4v1h-4zM0 4h3v1h-3zM0 5h2v1h-2zM0 6h1v1h-1z' fill='%23ececf1'/%3E%3C/svg%3E");
+  --check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='7' viewBox='0 0 7 7' shape-rendering='crispEdges'%3E%3Cpath d='M6 0h1v1h-1zM5 1h2v1h-2zM0 2h1v1h-1zM4 2h3v1h-3zM0 3h2v1h-2zM3 3h3v1h-3zM0 4h5v1h-5zM1 5h3v1h-3zM2 6h1v1h-1z' fill='%23ececf1'/%3E%3C/svg%3E");
+  --grip: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' shape-rendering='crispEdges'%3E%3Cpath d='M11 0h1v1h-1zM10 1h1v1h-1zM9 2h1v1h-1zM8 3h1v1h-1zM7 4h1v1h-1zM11 4h1v1h-1zM6 5h1v1h-1zM10 5h1v1h-1zM5 6h1v1h-1zM9 6h1v1h-1zM4 7h1v1h-1zM8 7h1v1h-1zM3 8h1v1h-1zM7 8h1v1h-1zM11 8h1v1h-1zM2 9h1v1h-1zM6 9h1v1h-1zM10 9h1v1h-1zM1 10h1v1h-1zM5 10h1v1h-1zM9 10h1v1h-1zM0 11h1v1h-1zM4 11h1v1h-1zM8 11h1v1h-1z' fill='%236e7080'/%3E%3Cpath d='M11 1h1v1h-1zM10 2h2v1h-2zM9 3h2v1h-2zM8 4h2v1h-2zM7 5h2v1h-2zM11 5h1v1h-1zM6 6h2v1h-2zM10 6h2v1h-2zM5 7h2v1h-2zM9 7h2v1h-2zM4 8h2v1h-2zM8 8h2v1h-2zM3 9h2v1h-2zM7 9h2v1h-2zM11 9h1v1h-1zM2 10h2v1h-2zM6 10h2v1h-2zM10 10h2v1h-2zM1 11h2v1h-2zM5 11h2v1h-2zM9 11h2v1h-2z' fill='%2308080a'/%3E%3C/svg%3E");
 
   color-scheme: dark;
 }
@@ -135,6 +156,77 @@ a:visited {
   border: 0;
 }
 
+::selection {
+  background: var(--select);
+  color: #ffffff;
+}
+
+/* ---------------------------------------------------------------- Scrollbars
+   Классический скроллбар: шахматная дорожка, объёмный ползунок и кнопки со стрелками.
+   Chrome, Edge и Safari рисуют его через ::-webkit-scrollbar, Firefox получает цвета. */
+
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--checker);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--face);
+  box-shadow: var(--raised);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--face);
+}
+
+/* По одной кнопке на каждом конце. Псевдокласс :single-button на macOS не срабатывает,
+   поэтому кнопки выбираются по положению. */
+::-webkit-scrollbar-button {
+  display: none;
+  width: 16px;
+  height: 16px;
+  background-color: var(--face);
+  background-repeat: no-repeat;
+  background-position: center;
+  box-shadow: var(--raised);
+}
+
+::-webkit-scrollbar-button:start:decrement,
+::-webkit-scrollbar-button:end:increment {
+  display: block;
+}
+
+::-webkit-scrollbar-button:active {
+  box-shadow: var(--pressed);
+  background-position: calc(50% + 1px) calc(50% + 1px);
+}
+
+::-webkit-scrollbar-button:vertical:decrement {
+  background-image: var(--arrow-up);
+}
+
+::-webkit-scrollbar-button:vertical:increment {
+  background-image: var(--arrow-down);
+}
+
+::-webkit-scrollbar-button:horizontal:decrement {
+  background-image: var(--arrow-left);
+}
+
+::-webkit-scrollbar-button:horizontal:increment {
+  background-image: var(--arrow-right);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-color: var(--face) var(--light);
+  }
+}
+
 /* Видимый фокус: пунктир, как в старых системах, плюс жёлтое кольцо для контраста. */
 :focus-visible {
   outline: 2px dotted var(--text);
@@ -145,7 +237,7 @@ a:visited {
 .window:focus-visible {
   outline: none;
   box-shadow:
-    var(--raised),
+    var(--frame),
     0 0 0 3px var(--focus);
 }
 
@@ -279,9 +371,14 @@ a:visited {
   flex-direction: column;
   padding: 3px;
   background: var(--face);
-  box-shadow: var(--raised);
+  box-shadow: var(--frame);
   resize: both;
   overflow: hidden;
+}
+
+/* Уголок для изменения размера — диагональные насечки, как у старых окон. */
+.window::-webkit-resizer {
+  background: var(--grip) no-repeat right 2px bottom 2px;
 }
 
 .window--document {
@@ -333,8 +430,10 @@ a:visited {
   flex: 1;
   min-width: 0;
   margin: 0;
-  font-size: 13px;
-  font-weight: 700;
+  font-family: var(--font-title);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -346,95 +445,53 @@ a:visited {
   flex: none;
 }
 
+/* Кнопка занимает 24×24 (минимальная цель для указателя, WCAG 2.5.8),
+   а объёмная «клавиша» внутри — классического размера. */
 .title-button {
+  --face-w: 20px;
+  --face-h: 18px;
   display: grid;
   place-items: center;
-  /* 24×24 — минимальный размер цели для указателя (WCAG 2.5.8) */
   width: 24px;
   height: 24px;
   padding: 0;
   border: 0;
+  background: none;
+  color: var(--text);
+}
+
+.title-button__face {
+  display: grid;
+  place-items: center;
+  width: var(--face-w);
+  height: var(--face-h);
   background: var(--face);
   box-shadow: var(--raised);
-  color: var(--text);
 }
 
 .title-button--close {
   margin-left: 2px;
 }
 
-.title-button:active:not(:disabled) {
+.title-button:active:not(:disabled) .title-button__face {
   box-shadow: var(--pressed);
 }
 
+.title-button:active:not(:disabled) .title-glyph {
+  transform: translate(1px, 1px);
+}
+
 .title-button:focus-visible {
-  outline-offset: 1px;
+  outline: none;
+  box-shadow: none;
+}
+
+.title-button:focus-visible .title-button__face {
+  outline: 1px dotted var(--text);
+  outline-offset: -4px;
   box-shadow:
     var(--raised),
-    0 0 0 3px var(--focus);
-}
-
-/* Глифы кнопок окна нарисованы фоном, без шрифтов */
-.glyph {
-  display: block;
-  width: 10px;
-  height: 9px;
-  position: relative;
-}
-
-.glyph--min::after {
-  content: "";
-  position: absolute;
-  left: 1px;
-  bottom: 0;
-  width: 7px;
-  height: 2px;
-  background: currentColor;
-}
-
-.glyph--max {
-  border: 1px solid currentColor;
-  border-top-width: 2px;
-}
-
-.glyph--restore::before,
-.glyph--restore::after {
-  content: "";
-  position: absolute;
-  width: 6px;
-  height: 5px;
-  border: 1px solid currentColor;
-  border-top-width: 2px;
-  background: var(--face);
-}
-
-.glyph--restore::before {
-  right: 0;
-  top: 0;
-}
-
-.glyph--restore::after {
-  left: 0;
-  bottom: 0;
-}
-
-.glyph--close::before,
-.glyph--close::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 11px;
-  height: 2px;
-  background: currentColor;
-}
-
-.glyph--close::before {
-  transform: translate(-50%, -50%) rotate(45deg);
-}
-
-.glyph--close::after {
-  transform: translate(-50%, -50%) rotate(-45deg);
+    0 0 0 2px var(--focus);
 }
 
 .window__body {
@@ -484,7 +541,17 @@ a:visited {
 }
 
 .start-button {
+  font-family: var(--font-title);
+  font-size: 16px;
   font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* Нажатая кнопка: содержимое сдвигается на пиксель, как у настоящей клавиши. */
+.start-button:active > *,
+.start-button.is-pressed > *,
+.btn:active > * {
+  transform: translate(1px, 1px);
 }
 
 .start-button.is-pressed,
@@ -496,9 +563,32 @@ a:visited {
 }
 
 .task-button.is-pressed {
-  background-image: repeating-conic-gradient(var(--face) 0 25%, var(--highlight) 0 50%);
-  background-size: 2px 2px;
+  background: var(--checker);
   font-weight: 700;
+}
+
+/* Разделитель с «ручкой» между кнопкой «Пуск» и окнами, как у панелей тех лет. */
+.taskbar__divider {
+  position: relative;
+  flex: none;
+  align-self: stretch;
+  width: 8px;
+  margin: 2px 0;
+  box-shadow:
+    inset 1px 0 var(--shadow),
+    inset 2px 0 var(--highlight);
+}
+
+.taskbar__divider::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 4px;
+  width: 3px;
+  box-shadow:
+    inset -1px -1px var(--shadow),
+    inset 1px 1px var(--highlight);
 }
 
 .taskbar__tasks {
@@ -574,7 +664,7 @@ a:visited {
   min-width: 270px;
   padding: 3px;
   background: var(--face);
-  box-shadow: var(--raised);
+  box-shadow: var(--frame);
 }
 
 .start-menu__banner {
@@ -589,9 +679,15 @@ a:visited {
 .start-menu__banner span {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
-  font-size: 18px;
-  letter-spacing: 0.02em;
+  font-family: var(--font-title);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
   white-space: nowrap;
+}
+
+.start-menu__banner b {
+  font-weight: 700;
 }
 
 .start-menu__list {
@@ -1001,7 +1097,18 @@ a:visited {
 }
 
 .markdown li > input[type="checkbox"] {
-  margin-right: 6px;
+  appearance: none;
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  margin: 0 6px 0 0;
+  vertical-align: -1px;
+  background: var(--paper) no-repeat center;
+  box-shadow: var(--sunken);
+}
+
+.markdown li > input[type="checkbox"]:checked {
+  background-image: var(--check);
 }
 
 .markdown ul.contains-task-list {
@@ -1274,12 +1381,18 @@ a:visited {
   }
 
   .window__title {
-    font-size: 15px;
+    font-size: 17px;
   }
 
   .title-button {
+    --face-w: 30px;
+    --face-h: 26px;
     width: 34px;
-    height: 30px;
+    height: 32px;
+  }
+
+  .taskbar__divider {
+    display: none;
   }
 
   .title-button--max {

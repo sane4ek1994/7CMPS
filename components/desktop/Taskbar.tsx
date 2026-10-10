@@ -142,6 +142,7 @@ export function Taskbar({ startItems }: { startItems: StartMenuItem[] }) {
         </button>
         {menuOpen && <StartMenu items={startItems} onClose={() => setMenuOpen(false)} />}
       </div>
+      <span className="taskbar__divider" aria-hidden="true" />
 
       <nav className="taskbar__tasks" aria-label="Открытые окна">
         {windows.map((win) => {
