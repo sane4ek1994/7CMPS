@@ -1,0 +1,35 @@
+name: Links
+
+on:
+  pull_request:
+    paths: ["**/*.md", "lychee.toml"]
+  push:
+    branches: [main]
+    paths: ["**/*.md", "lychee.toml"]
+  schedule:
+    # Раз в неделю: внешние ссылки со временем ломаются сами по себе.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lychee:
+    name: Проверка ссылок
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --config lychee.toml
+            --no-progress
+            './*.md'
+            './cohorts/**/*.md'
+            './topics/**/*.md'
+            './projects/**/*.md'
+            './.github/**/*.md'
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

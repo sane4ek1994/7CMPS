@@ -1,0 +1,23 @@
+name: Идея для сайта
+description: Предложение по интерфейсу, навигации или новым разделам хаба
+title: "Идея: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Какую проблему решает
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Что предлагаете
+    validations:
+      required: true
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Ограничения проекта
+      options:
+        - label: Идея не требует бэкенда, базы данных или регистрации (на первом этапе обходимся GitHub).

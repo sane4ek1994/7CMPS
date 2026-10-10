@@ -1,0 +1,20 @@
+// Проверка Markdown: `npm run lint:md`. Правила: https://github.com/DavidAnson/markdownlint
+{
+  "config": {
+    "default": true,
+    // Длинные строки в учебных текстах — норма.
+    "MD013": false,
+    // Одинаковые заголовки разрешены в разных разделах.
+    "MD024": { "siblings_only": true },
+    // Сырой HTML сайт не показывает, поэтому правило MD033 оставлено включённым.
+  },
+  "globs": ["**/*.md"],
+  "ignores": [
+    "node_modules/**",
+    ".next/**",
+    "out/**",
+    "public/files/**",
+    "AGENTS.md",
+    "claude-code-prompt.md",
+  ],
+}

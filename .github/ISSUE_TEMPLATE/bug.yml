@@ -1,0 +1,32 @@
+name: Ошибка на сайте или в материале
+description: Что-то не работает, отображается неправильно или содержит ошибку
+title: "Ошибка: "
+labels: ["bug"]
+body:
+  - type: input
+    id: url
+    attributes:
+      label: Где
+      description: Адрес страницы или путь к файлу в репозитории.
+      placeholder: https://…/cohorts/07/linux-navigation/
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: Что случилось
+      description: Что вы ожидали увидеть и что увидели на самом деле.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Как повторить
+      placeholder: |
+        1. Открыть …
+        2. Нажать …
+  - type: input
+    id: device
+    attributes:
+      label: Устройство и браузер
+      placeholder: Android, Chrome 129 / macOS, Safari 18

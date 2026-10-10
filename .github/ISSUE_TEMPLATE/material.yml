@@ -1,0 +1,48 @@
+name: Предложить материал
+description: Идея конспекта, презентации, примера документации или проекта
+title: "Материал: "
+labels: ["материал"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Готовы написать сами? Можно сразу открыть pull request по инструкции из CONTRIBUTING.md.
+        Этот шаблон подойдёт, если хотите обсудить идею или найти соавтора.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Тип материала
+      options:
+        - Конспект
+        - Презентация
+        - Пример документации
+        - Проект
+    validations:
+      required: true
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Тема
+      options:
+        - linux
+        - docker
+        - ci-cd
+        - kubernetes
+        - terraform
+        - другая (опишите ниже)
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: О чём материал
+      description: Пара предложений о содержании и о том, кому он будет полезен.
+    validations:
+      required: true
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: Правила
+      options:
+        - label: Материал будет моим собственным текстом, без копий платных курсов и чужих статей.
+          required: true

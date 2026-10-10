@@ -1,0 +1,15 @@
+# Проверка ссылок: https://lychee.cli.rs
+# Запускается в GitHub Actions (.github/workflows/links.yml).
+
+max_retries = 3
+timeout = 20
+accept = ["200..=299", "429"]
+exclude_path = ["node_modules", ".next", "out"]
+exclude = [
+  "^https?://localhost",
+  "^https?://([a-z0-9-]+\\.)?example\\.com",
+  # Ссылки на правку и Discussions требуют входа или включённых настроек репозитория.
+  "^https://github\\.com/[^/]+/[^/]+/(edit|discussions|new)/?",
+  "^https://github\\.com/[^/]+/[^/]+/discussions$",
+  "^https://app\\.netlify\\.com",
+]

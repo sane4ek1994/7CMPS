@@ -1,36 +1,164 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DevOps Campus
 
-## Getting Started
+Open-source хаб студентов, которые учатся DevOps на платформе «Просто DevOps».
+Первый поток проекта — **«7 Кампус»** (7-й поток), следующие потоки (08, 09 и дальше)
+добавляются в ту же структуру.
 
-First, run the development server:
+Репозиторий одновременно хранит учебные материалы и собирает из них сайт в стиле
+рабочего стола конца 90-х: потоки показаны как папки, темы как окна проводника,
+материалы как файлы, а «Общение» — отдельное окно с каналами.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- конспекты, презентации и примеры документации лежат в Markdown-файлах;
+- материалы добавляются через pull request, бэкенда и регистрации нет;
+- обсуждения работают на GitHub Discussions через [giscus](https://giscus.app);
+- сайт статический и публикуется на Netlify.
+
+## Структура репозитория
+
+```text
+cohorts/07/        материалы 7-го потока: конспекты, презентации, примеры документации
+topics/            общие материалы по темам: linux, docker, ci-cd, kubernetes, terraform
+projects/          практические проекты студентов
+app/               страницы сайта (Next.js App Router)
+components/        интерфейс: рабочий стол, окна, проводник, пиксельные иконки
+lib/               чтение Markdown и frontmatter
+scripts/           вспомогательные скрипты сборки
+site.config.ts     название, репозиторий, настройки giscus и каналов «Общения»
+.github/           шаблоны issues и pull request, GitHub Actions
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Сайт сканирует `cohorts/`, `topics/` и `projects/` при каждой сборке. Новый Markdown-файл
+появляется на сайте после слияния в `main`, код править не нужно.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Быстрый старт
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Нужен [Node.js](https://nodejs.org) 20.9 или новее (в CI используется 22).
 
-## Learn More
+```bash
+git clone https://github.com/sane4ek1994/7CMPS.git devops-campus
+cd devops-campus
+npm ci
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Откройте <http://localhost:3000>. Правки в Markdown видны после обновления страницы.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Команда                           | Что делает                              |
+| --------------------------------- | --------------------------------------- |
+| `npm run dev`                     | локальный сервер разработки             |
+| `npm run build`                   | статическая сборка в папку `out/`       |
+| `npm run preview`                 | раздать собранную папку `out/` локально |
+| `npm run lint`                    | ESLint                                  |
+| `npm run lint:md`                 | проверка Markdown (markdownlint)        |
+| `npm run format` / `format:check` | Prettier                                |
+| `npm run typecheck`               | проверка типов TypeScript               |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Как добавить материал
 
-## Deploy on Vercel
+Коротко: создайте Markdown-файл в нужной папке, заполните frontmatter и откройте
+pull request. Это можно сделать прямо в веб-интерфейсе GitHub, ничего не устанавливая.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```markdown
+---
+title: "Docker: тома и сети"
+author: your-github-login
+topic: docker
+cohort: "07"
+date: 2026-10-12
+kind: notes
+tags: [docker, volumes]
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Первый абзац — короткое описание, оно попадёт в список материалов.
+
+## Первый раздел
+```
+
+Подробные правила, шаблон проекта и ответы на частые вопросы — в
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Публикация на Netlify
+
+Сайт собирается как статический экспорт Next.js (`output: "export"`). Настройки
+уже лежат в [`netlify.toml`](netlify.toml): команда `npm run build`, папка `out`,
+Node.js 22.
+
+1. Войдите в [Netlify](https://app.netlify.com) и нажмите **Add new site → Import an existing project**.
+2. Выберите **GitHub** и этот репозиторий.
+3. Netlify подхватит настройки из `netlify.toml`. Проверьте, что Build command — `npm run build`,
+   а Publish directory — `out`, и нажмите **Deploy**.
+4. Если параметры giscus задаются переменными окружения (см. ниже), добавьте их в
+   **Site configuration → Environment variables** и перезапустите деплой.
+
+После этого каждый коммит в `main` пересобирает сайт. Для pull request'ов Netlify
+по умолчанию создаёт preview-деплой со ссылкой в PR.
+
+> Почему нет SPA-редиректа на `index.html`: каждая страница уже лежит отдельным HTML-файлом
+> (`out/topics/docker/index.html`), поэтому прямые ссылки работают сами, а для
+> несуществующих адресов Netlify отдаёт `out/404.html`.
+
+## Обсуждения: GitHub Discussions и giscus
+
+Комментарии к материалам и окно «Общение» работают через giscus. Пока он не настроен,
+сайт показывает подсказку вместо комментариев. Что нужно сделать один раз:
+
+1. **Включить Discussions.** В репозитории: **Settings → General → Features → Discussions**.
+2. **Создать категорию.** Во вкладке **Discussions** нажмите карандаш рядом с категориями
+   и создайте категорию `Комментарии` с форматом **Announcement**: новые ветки сможет
+   создавать только giscus, а участники будут отвечать в них.
+3. **Установить приложение giscus** на репозиторий: <https://github.com/apps/giscus>.
+4. **Получить идентификаторы.** На <https://giscus.app/ru> укажите репозиторий,
+   выберите способ связи «Discussion term contains specific term» и категорию `Комментарии`.
+   Внизу страницы появятся `data-repo-id` и `data-category-id`.
+5. **Вписать их в проект** одним из способов:
+   - в [`site.config.ts`](site.config.ts), поля `giscus.repoId` и `giscus.categoryId`;
+   - или переменными окружения Netlify `NEXT_PUBLIC_GISCUS_REPO_ID` и
+     `NEXT_PUBLIC_GISCUS_CATEGORY_ID` (также доступны `NEXT_PUBLIC_GISCUS_REPO` и
+     `NEXT_PUBLIC_GISCUS_CATEGORY`).
+
+Эти значения не секретные: они видны в коде любой страницы с giscus.
+
+Как связаны ветки обсуждений: у материала ключ — путь к файлу без расширения
+(`cohorts/07/linux-navigation`), у каналов «Общения» — `chat/<id канала>`. Каналы
+настраиваются в `site.config.ts` → `chatChannels`. Если файл материала переименовать,
+обсуждение останется у старого ключа.
+
+## Проверки в GitHub Actions
+
+| Workflow                                         | Что проверяет                                                          |
+| ------------------------------------------------ | ---------------------------------------------------------------------- |
+| [`ci.yml`](.github/workflows/ci.yml)             | ESLint, Prettier, типы и `npm run build`, включая проверку frontmatter |
+| [`markdown.yml`](.github/workflows/markdown.yml) | оформление Markdown через markdownlint                                 |
+| [`links.yml`](.github/workflows/links.yml)       | битые ссылки (lychee) в pull request'ах и раз в неделю                 |
+
+Если во frontmatter ошибка, сборка падает и пишет, какой файл и какое поле исправить.
+
+## Технические заметки
+
+- Стек: Next.js 16 (App Router, статический экспорт), React 19, TypeScript.
+  Изначально в задаче был Vite, но репозиторий уже был создан на Next.js, и решили
+  остаться на нём. Статический экспорт даёт то же, что нужно от Vite-сайта: готовые
+  файлы без сервера.
+- Cache Components в `next.config.ts` выключены: со статическим экспортом они не работают.
+- Markdown превращается в HTML на этапе сборки (unified, remark, rehype). Сырой HTML
+  внутри Markdown не выводится.
+- Вложения (картинки, PDF) из папок с материалами копируются в `public/files/`
+  скриптом `scripts/sync-assets.mjs` перед `dev` и `build`.
+- Иконки, пиксельный шрифт надписи на рабочем столе и все элементы интерфейса нарисованы
+  для проекта. Логотипы Microsoft и других компаний не используются.
+- Доступность: навигация с клавиатуры (Tab, стрелки в меню «Пуск» и во вкладках, Esc),
+  видимый фокус, контраст текста не ниже 4.5:1, на телефоне окна открываются на весь экран.
+
+## Лицензии
+
+В репозитории две лицензии:
+
+- **код** (всё, кроме учебных материалов) распространяется по лицензии [MIT](LICENSE);
+- **учебные материалы** в `cohorts/`, `topics/` и `projects/` — по лицензии
+  [CC BY-SA 4.0](LICENSE-CONTENT.md).
+
+CC BY-SA 4.0 означает, что материалы можно копировать, переделывать и использовать
+в своих конспектах, если указать автора и распространять результат на тех же условиях.
+Отправляя pull request с материалом, вы соглашаетесь опубликовать его на этих условиях.
+Поэтому добавляйте только свой текст и свои схемы, без копий платных курсов и чужих
+защищённых материалов.
