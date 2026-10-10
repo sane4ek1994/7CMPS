@@ -1,33 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 220" font-family="monospace" font-size="14">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 250" font-family="monospace" font-size="14">
   <title>Основные каталоги Linux</title>
-  <rect width="480" height="220" fill="#ffffff"/>
-  <g fill="none" stroke="#000080" stroke-width="2">
-    <path d="M240 46 V70 M60 70 H420 M60 70 V96 M150 70 V96 M240 70 V96 M330 70 V96 M420 70 V96"/>
-    <path d="M60 128 V150 H90 M60 150 V176 H90"/>
+  <desc>Корень / и пять каталогов верхнего уровня: /etc (внутри nginx/ и ssh/), /var (внутри log/), /home (внутри student/), /opt и /tmp.</desc>
+  <rect width="560" height="250" fill="#ffffff"/>
+
+  <!-- Ветки: у каждого каталога своя колонка шириной 105px, подкаталоги висят на линии от левого края блока -->
+  <g fill="none" stroke="#000080" stroke-width="2" stroke-linecap="square">
+    <path d="M280 46 V70 M70 70 H490 M70 70 V96 M175 70 V96 M280 70 V96 M385 70 V96 M490 70 V96"/>
+    <path d="M44 128 V176 M44 152 H58 M44 176 H58"/>
+    <path d="M149 128 V152 H163"/>
+    <path d="M254 128 V152 H268"/>
   </g>
+
   <g fill="#c0c0c0" stroke="#000000">
-    <rect x="210" y="14" width="60" height="32"/>
-    <rect x="25" y="96" width="70" height="32"/>
-    <rect x="115" y="96" width="70" height="32"/>
-    <rect x="205" y="96" width="70" height="32"/>
-    <rect x="295" y="96" width="70" height="32"/>
-    <rect x="385" y="96" width="70" height="32"/>
+    <rect x="248" y="14" width="64" height="32"/>
+    <rect x="30" y="96" width="80" height="32"/>
+    <rect x="135" y="96" width="80" height="32"/>
+    <rect x="240" y="96" width="80" height="32"/>
+    <rect x="345" y="96" width="80" height="32"/>
+    <rect x="450" y="96" width="80" height="32"/>
   </g>
+
   <g fill="#000000" text-anchor="middle">
-    <text x="240" y="35">/</text>
-    <text x="60" y="117">/etc</text>
-    <text x="150" y="117">/var</text>
-    <text x="240" y="117">/home</text>
-    <text x="330" y="117">/opt</text>
-    <text x="420" y="117">/tmp</text>
+    <text x="280" y="35">/</text>
+    <text x="70" y="117">/etc</text>
+    <text x="175" y="117">/var</text>
+    <text x="280" y="117">/home</text>
+    <text x="385" y="117">/opt</text>
+    <text x="490" y="117">/tmp</text>
   </g>
+
   <g fill="#000000">
-    <text x="96" y="155">nginx/</text>
-    <text x="96" y="181">ssh/</text>
+    <text x="62" y="157">nginx/</text>
+    <text x="62" y="181">ssh/</text>
+    <text x="167" y="157">log/</text>
+    <text x="272" y="157">student/</text>
   </g>
-  <g fill="#000000">
-    <text x="150" y="155" text-anchor="middle">log/</text>
-    <text x="240" y="155" text-anchor="middle">student/</text>
-  </g>
-  <text x="240" y="208" fill="#404040" text-anchor="middle" font-size="12">Схема: DevOps Campus, CC BY-SA 4.0</text>
+
+  <text x="280" y="236" fill="#404040" text-anchor="middle" font-size="12">Схема: DevOps Campus, CC BY-SA 4.0</text>
 </svg>
