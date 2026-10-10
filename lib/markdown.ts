@@ -60,6 +60,9 @@ function rehypeRepoLinks(options: { filePath: string }) {
         node.properties.src = resolve(node.properties.src);
         node.properties.loading = "lazy";
       }
+      // Заголовок окна — h2, поэтому заголовки текста сдвигаются на уровень ниже: `##` -> h3.
+      const level = /^h([1-6])$/.exec(node.tagName);
+      if (level) node.tagName = `h${Math.min(Number(level[1]) + 1, 6)}`;
       // Широкие таблицы прокручиваются внутри окна, а не растягивают его.
       if (node.tagName === "table" && parent && typeof index === "number") {
         parent.children[index] = {
