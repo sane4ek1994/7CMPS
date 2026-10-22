@@ -91,6 +91,8 @@ export function renderMarkdown(markdown: string, filePath: string): string {
         languages: { ...common, dockerfile, nginx },
         aliases: { ini: ["toml", "hcl", "terraform", "tf"], bash: ["sh", "console"] },
         detect: false,
+        // Вывод команд в блоках ```text показывается как есть, без раскраски.
+        plainText: ["text"],
       })
       .use(rehypeStringify)
       .processSync(markdown),
