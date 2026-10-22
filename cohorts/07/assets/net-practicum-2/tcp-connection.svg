@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 430" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15">
+  <title>Одно HTTP-соединение по TCP</title>
+  <desc>Клиент 203.0.113.50:50200 и сервер 203.0.113.25:8080. Рукопожатие: SYN с seq = x, SYN-ACK с seq = y и ack = x+1, ACK с ack = y+1, соединение установлено. Затем запрос GET / и ответ 200 OK, каждую порцию данных подтверждают ACK. В конце сервер отправляет FIN, клиент отвечает своим FIN, последний ACK закрывает соединение.</desc>
+  <defs>
+    <marker id="a-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#B8491E"/></marker>
+    <marker id="a-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#13212B"/></marker>
+    <marker id="a-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#17786C"/></marker>
+  </defs>
+  <rect width="560" height="430" fill="#FFFFFF"/>
+
+  <rect x="40" y="10" width="140" height="44" rx="8" fill="#F6E3D8" stroke="#B8491E"/>
+  <text x="110" y="30" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#13212B">Клиент</text>
+  <text x="110" y="47" text-anchor="middle" font-size="13" fill="#4A5863">203.0.113.50:50200</text>
+  <rect x="380" y="10" width="140" height="44" rx="8" fill="#E3F1EE" stroke="#17786C"/>
+  <text x="450" y="30" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="#13212B">Сервер</text>
+  <text x="450" y="47" text-anchor="middle" font-size="13" fill="#4A5863">203.0.113.25:8080</text>
+  <line x1="110" y1="54" x2="110" y2="420" stroke="#D6DDDB" stroke-width="2"/>
+  <line x1="450" y1="54" x2="450" y2="420" stroke="#D6DDDB" stroke-width="2"/>
+
+  <g font-weight="600" fill="#B8491E" text-anchor="middle">
+    <text x="280" y="84">1. SYN, seq = x</text>
+    <text x="280" y="124">2. SYN-ACK, seq = y, ack = x+1</text>
+    <text x="280" y="164">3. ACK, ack = y+1</text>
+  </g>
+  <g stroke="#B8491E" stroke-width="2.5">
+    <line x1="112" y1="94" x2="446" y2="94" marker-end="url(#a-acc)"/>
+    <line x1="448" y1="134" x2="114" y2="134" marker-end="url(#a-acc)"/>
+    <line x1="112" y1="174" x2="446" y2="174" marker-end="url(#a-acc)"/>
+  </g>
+  <rect x="150" y="186" width="260" height="26" rx="13" fill="#F6E3D8"/>
+  <text x="280" y="204" text-anchor="middle" font-size="13" fill="#B8491E">соединение установлено</text>
+
+  <g font-weight="600" fill="#13212B" text-anchor="middle">
+    <text x="280" y="240">запрос: GET /</text>
+    <text x="280" y="280">ACK, потом ответ: 200 OK</text>
+  </g>
+  <g stroke="#13212B" stroke-width="2">
+    <line x1="112" y1="250" x2="446" y2="250" marker-end="url(#a-ink)"/>
+    <line x1="448" y1="290" x2="114" y2="290" marker-end="url(#a-ink)"/>
+  </g>
+  <text x="280" y="318" text-anchor="middle" font-size="13" fill="#4A5863">каждую порцию данных подтверждают ACK</text>
+
+  <g font-weight="600" fill="#17786C" text-anchor="middle">
+    <text x="280" y="348">FIN: «я закончил»</text>
+    <text x="280" y="384">FIN: «я тоже»</text>
+  </g>
+  <g stroke="#17786C" stroke-width="2">
+    <line x1="448" y1="358" x2="114" y2="358" marker-end="url(#a-teal)"/>
+    <line x1="112" y1="394" x2="446" y2="394" marker-end="url(#a-teal)"/>
+  </g>
+  <text x="280" y="414" text-anchor="middle" font-size="13" fill="#17786C">последний ACK — соединение закрыто</text>
+</svg>
