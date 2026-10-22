@@ -1,0 +1,1073 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Экран top по буквам</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+/* Layout: живой терминал с карточкой-объяснением справа (на телефоне — снизу), под ним разбор в одну колонку. Только светлая тема: файл рассылают группе. */
+:root{
+  --paper:#F4F2EC; --surface:#FFFFFF; --ink:#0F1C26; --ink-2:#2A3843; --muted:#5A6670; --line:#DDD8CC;
+  --accent:#E4622C; --accent-ink:#B0441A; --accent-soft:#FBE9DF; --warn-ink:#9A3412;
+  --term:#0F1C26; --term-bar:#1A2C3A; --term-fg:#C3CDD5; --term-bright:#FFFFFF; --term-dim:#7F909C; --term-head:#C3CDD5;
+  --font-ui:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 var(--font-ui);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1280px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:40px 72px}
+code{font-family:var(--font-mono);font-size:.86em;background:rgba(15,28,38,.07);padding:1px 5px;border-radius:4px;white-space:nowrap}
+button{font-family:inherit}
+button:focus-visible,.term:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.eyebrow{font:500 12px/1.2 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink)}
+h1{font-size:clamp(34px,5.4vw,58px);line-height:1.02;letter-spacing:-.025em;margin:12px 0 16px;font-weight:700;text-wrap:balance}
+h1 .mono{font-family:var(--font-mono);font-weight:700;letter-spacing:-.04em;color:var(--accent)}
+.lead{font-size:18px;max-width:64ch;color:var(--ink-2);margin:0}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.fact{font:500 13px/1 var(--font-ui);padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--muted)}
+
+/* сцена */
+.stage{display:grid;gap:20px;margin-top:32px;align-items:start}
+@media(min-width:1180px){.stage{grid-template-columns:minmax(0,1fr) 372px}}
+.left{min-width:0;display:flex;flex-direction:column;gap:12px}
+.modes{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.mode{font:600 14px var(--font-ui);padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.mode[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.mode-hint{font-size:14px;color:var(--muted);margin-left:4px}
+
+.term{background:var(--term);border-radius:12px;box-shadow:0 1px 0 rgba(15,28,38,.06),0 22px 44px -22px rgba(15,28,38,.55);overflow:hidden}
+.bar{display:flex;align-items:center;gap:12px;padding:9px 14px;background:var(--term-bar);color:var(--term-dim);font:12px/1.2 var(--font-mono)}
+.dots{display:flex;gap:6px}.dots i{width:11px;height:11px;border-radius:50%;background:#34495A;display:block}
+.bar .ttl{flex:1;text-align:center;margin-right:45px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scroll{overflow-x:auto;overscroll-behavior-x:contain;position:relative}
+.screen{font:13px/1.5 var(--font-mono);color:var(--term-fg);padding:14px 16px 18px;margin:0;width:max-content;min-width:100%}
+.ln{display:block;white-space:pre;width:104ch;min-height:1.5em}
+.screen b,.strip b{font-weight:700;color:var(--term-bright)}
+.ln.hdr{background:var(--term-head);color:var(--term)}
+.ln.run{font-weight:700;color:var(--term-bright)}
+.t{cursor:pointer;border-radius:3px;transition:background-color .12s,color .12s}
+.t:hover,.t.hl{background:rgba(228,98,44,.32);color:#fff}
+.t:hover b,.t.hl b{color:#fff}
+.ln.hdr .t:hover,.ln.hdr .t.hl{background:rgba(228,98,44,.45);color:var(--term)}
+.t.sel,.ln.hdr .t.sel{background:var(--accent);color:#fff}
+.t.sel b{color:#fff}
+.t.msg:hover{background:rgba(255,255,255,.07)}
+.t.msg.sel{background:rgba(228,98,44,.4)}
+.t.quiz{background:var(--accent);color:#fff;box-shadow:0 0 0 2px #FFC7AB;animation:pulse 1.4s ease-in-out infinite}
+.t.quiz b{color:#fff}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(255,199,171,.25)}}
+@media (prefers-reduced-motion:reduce){.t.quiz{animation:none}.t{transition:none}}
+
+.keys{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.keys-title{font-size:14px;color:var(--muted);width:100%}
+.key{display:inline-flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border:1px solid var(--line);background:var(--surface);border-radius:8px;cursor:pointer;font:500 13px/1.2 var(--font-ui);color:var(--ink)}
+.key kbd{font:700 13px/1 var(--font-mono);min-width:26px;height:26px;padding:0 5px;display:inline-grid;place-items:center;border-radius:6px;background:var(--paper);border:1px solid var(--line);border-bottom-width:2px;color:var(--ink)}
+.key:hover{border-color:#C9C2B3}
+.key[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.key[aria-pressed="true"] kbd{background:var(--accent);color:#fff;border-color:var(--accent-ink)}
+.key.reset{padding:5px 12px;color:var(--muted)}
+.status{font:12px/1.4 var(--font-mono);color:var(--muted)}
+
+/* карточка */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 20px 22px;min-width:0}
+@media(min-width:1180px){.card{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}}
+.sheet-x{display:none;justify-content:flex-end;margin:-4px 0 6px}
+@media(max-width:1179px){
+  .card{position:fixed;left:0;right:0;bottom:0;z-index:20;max-height:52vh;overflow:auto;border-radius:16px 16px 0 0;border-width:1px 0 0;
+    box-shadow:0 -18px 40px -16px rgba(15,28,38,.45);transition:transform .22s ease,visibility .22s;
+    padding:14px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+  .card.hide,.card.away{transform:translateY(105%);visibility:hidden}
+  .sheet-x{display:flex}
+}
+@media(max-width:1179px) and (prefers-reduced-motion:reduce){.card{transition:none}}
+.card p{margin:0 0 10px}
+.card-eyebrow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chip{font:600 12px/1 var(--font-ui);padding:6px 8px;border-radius:6px;background:var(--paper);color:var(--muted)}
+.chip.mono{font-family:var(--font-mono);background:var(--ink);color:#fff;white-space:pre}
+.card-title{font-size:21px;line-height:1.25;margin:0 0 12px;letter-spacing:-.01em;text-wrap:balance}
+.lbl{font:600 11px/1.2 var(--font-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.here{border:1px dashed #C9C2B3;border-radius:10px;padding:10px 12px 2px;margin-bottom:12px}
+.say{background:var(--accent-soft);border-radius:10px;padding:12px 14px 4px;margin-bottom:14px}
+.say .lbl{color:var(--accent-ink)}
+.say p{font-weight:500}
+.more{color:var(--ink-2)}
+.warn{border-top:1px solid var(--line);padding-top:12px;margin-top:6px}
+.warn .lbl{color:var(--warn-ink)}
+.cmds{border-top:1px solid var(--line);padding-top:12px;margin-top:6px}
+.cmds code{display:inline-block;margin:0 6px 6px 0;padding:3px 7px}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
+.btn{font:600 14px/1.2 var(--font-ui);padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;color:var(--ink)}
+.btn:hover{border-color:#C9C2B3}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.mono{font-family:var(--font-mono);font-size:13px}
+.small{font-size:14px;color:var(--muted)}
+
+/* разбор */
+section{margin-top:76px}
+h2{font-size:clamp(26px,3.2vw,36px);letter-spacing:-.02em;line-height:1.12;margin:8px 0 12px;text-wrap:balance}
+.sec-lead{max-width:68ch;color:var(--ink-2);margin:0 0 20px}
+.strip{background:var(--term);color:var(--term-fg);border-radius:10px;padding:12px 16px;overflow-x:auto;font:13px/1.5 var(--font-mono);margin:0 0 18px}
+.strip .ln{width:auto}
+.strip .ln.hdr{display:inline-block;padding-right:1ch}
+.grp-title{font-size:20px;margin:34px 0 12px;letter-spacing:-.01em}
+.strip .t{cursor:default;pointer-events:none}
+.items{display:grid;gap:12px}
+@media(min-width:880px){.items{grid-template-columns:1fr 1fr}}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px 10px;min-width:0}
+.item-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.item-head .lab{background:var(--ink);color:#fff;font-weight:700;font-size:13px;padding:3px 7px;white-space:pre}
+.item h3{font-size:17px;line-height:1.3;margin:0;flex:1;min-width:14ch}
+.show{font:600 13px var(--font-ui);color:var(--accent-ink);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.item p{margin:0 0 8px}
+.item .say-t{font-weight:500}
+.item .more{font-size:15px}
+.item .warn-t{font-size:15px}
+.item .warn-t strong{color:var(--warn-ink)}
+.item .cmd-t code{margin-right:4px}
+
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:600px}
+th,td{padding:10px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{font:600 12px/1.3 var(--font-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:#FAF9F5}
+tr:last-child td{border-bottom:0}
+td:first-child{white-space:nowrap}
+td code{white-space:nowrap}
+.two{display:grid;gap:24px}
+@media(min-width:1000px){.two{grid-template-columns:1.25fr 1fr}}
+.two h3{font-size:19px;margin:0 0 10px}
+
+.story{list-style:none;counter-reset:s;padding:0;margin:0;display:grid;gap:10px;max-width:880px}
+.story li{counter-increment:s;display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.story li::before{content:counter(s);font:700 14px/1 var(--font-mono);width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:#fff}
+.story p{margin:0 0 6px}
+.story strong{font-weight:600}
+.verdict{max-width:880px;margin-top:14px;background:var(--ink);color:#EEF2F4;border-radius:12px;padding:16px 18px}
+.verdict strong{color:#fff}
+
+.qa{display:grid;gap:12px}
+@media(min-width:880px){.qa{grid-template-columns:1fr 1fr}}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px 12px;min-width:0}
+.q h3{font-size:17px;line-height:1.35;margin:0 0 8px}
+.q p{margin:0 0 8px;color:var(--ink-2)}
+.note{max-width:76ch;font-size:15px;color:var(--muted);margin-top:18px}
+footer{margin-top:72px;padding-top:20px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Linux · процессы · подготовка к собеседованию</div>
+    <h1>Экран <span class="mono">top</span> по буквам</h1>
+    <p class="lead">На собеседовании часто делятся экраном с открытым top и спрашивают: «Что это за цифра?» Ниже такой экран целиком. Нажми на любое место — рядом появится объяснение и короткий ответ, который можно сказать вслух.</p>
+    <div class="facts">
+      <span class="fact">Ubuntu 24.04 · top из procps-ng 4.0.4</span>
+      <span class="fact">Сервер: 2 ядра, 4 ГиБ памяти, 2 ГиБ swap</span>
+      <span class="fact">Учебный пример: на экране есть все состояния процессов</span>
+    </div>
+  </header>
+
+  <div class="stage" id="stage">
+    <div class="left">
+      <div class="modes" role="group" aria-label="Режим">
+        <button class="mode" id="mode-learn" aria-pressed="true">Разбор</button>
+        <button class="mode" id="mode-quiz" aria-pressed="false">Тренажёр</button>
+        <span class="mode-hint" id="mode-hint">Нажимай на цифры, буквы и слова на экране</span>
+      </div>
+      <div class="term" id="term" tabindex="0" aria-label="Экран top. Когда он в фокусе, работают клавиши top">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="ttl">ubuntu@report-01: ~ — top</span></div>
+        <div class="scroll" id="scroll"><div class="screen" id="screen"></div></div>
+      </div>
+      <div class="keys" id="keys">
+        <div class="keys-title">Клавиши top: нажми, и экран поменяется, как в настоящем. Когда экран в фокусе, можно жать и на клавиатуре.</div>
+      </div>
+      <div class="status" id="status"></div>
+    </div>
+    <aside class="card" id="card" aria-live="polite"></aside>
+  </div>
+
+  <section id="ref-head">
+    <div class="eyebrow">Сводка</div>
+    <h2>Пять строк над таблицей</h2>
+    <p class="sec-lead">Верх экрана — сводка по всему серверу. Если спросят «что тут происходит», начинай с неё: нагрузка, процессор, память. Потом переходи к процессам.</p>
+    <div id="ref-lines"></div>
+  </section>
+
+  <section id="ref-cols">
+    <div class="eyebrow">Таблица процессов</div>
+    <h2>Двенадцать колонок</h2>
+    <p class="sec-lead">Каждая строка таблицы — один процесс. По умолчанию сверху те, кто больше всех тратит процессор.</p>
+    <div class="strip" id="strip-cols"></div>
+    <div class="items" id="items-cols"></div>
+  </section>
+
+  <section id="ref-states">
+    <div class="eyebrow">Колонка S</div>
+    <h2>Все буквы состояния</h2>
+    <p class="sec-lead">Самый частый вопрос на собеседовании про top. На экране выше есть каждая буква — нажми на неё в строке, чтобы увидеть, почему этот процесс в таком состоянии.</p>
+    <div class="items" id="items-states"></div>
+  </section>
+
+  <section id="ref-keys">
+    <div class="eyebrow">Управление</div>
+    <h2>Клавиши и ключи запуска</h2>
+    <p class="sec-lead">Внутри top работают клавиши: заглавные и строчные буквы различаются. <code>P</code> — это Shift+P.</p>
+    <div class="two">
+      <div>
+        <h3>Клавиши внутри top</h3>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Клавиша</th><th>Что делает</th></tr></thead>
+          <tbody>
+            <tr><td><code>q</code></td><td>Выйти из top</td></tr>
+            <tr><td><code>h</code> или <code>?</code></td><td>Справка по всем клавишам</td></tr>
+            <tr><td><code>1</code></td><td>Каждое ядро отдельной строкой</td></tr>
+            <tr><td><code>P</code> <code>M</code> <code>N</code> <code>T</code></td><td>Сортировка по %CPU, памяти, PID, TIME+</td></tr>
+            <tr><td><code>R</code></td><td>Перевернуть порядок сортировки</td></tr>
+            <tr><td><code>&lt;</code> <code>&gt;</code></td><td>Сортировать по соседней колонке слева или справа</td></tr>
+            <tr><td><code>c</code></td><td>Полная командная строка вместо имени</td></tr>
+            <tr><td><code>V</code></td><td>Дерево процессов: дети под родителями</td></tr>
+            <tr><td><code>H</code></td><td>Показывать потоки, а не процессы</td></tr>
+            <tr><td><code>i</code></td><td>Скрыть процессы, которые не тратят процессор</td></tr>
+            <tr><td><code>u</code></td><td>Процессы одного пользователя</td></tr>
+            <tr><td><code>o</code></td><td>Фильтр, например <code>COMMAND=nginx</code> или <code>%CPU&gt;5.0</code>. Клавиша <code>=</code> сбрасывает фильтры</td></tr>
+            <tr><td><code>L</code> и <code>&amp;</code></td><td>Найти текст на экране и искать дальше</td></tr>
+            <tr><td><code>k</code></td><td>Послать сигнал процессу. Спросит PID и номер сигнала, по умолчанию 15 (SIGTERM)</td></tr>
+            <tr><td><code>r</code></td><td>Изменить nice процесса (renice)</td></tr>
+            <tr><td><code>f</code></td><td>Выбрать колонки: например PPID, nTH (число потоков), SWAP, WCHAN</td></tr>
+            <tr><td><code>d</code> или <code>s</code></td><td>Интервал обновления, по умолчанию 3 секунды</td></tr>
+            <tr><td>Пробел</td><td>Обновить экран прямо сейчас</td></tr>
+            <tr><td><code>E</code> <code>e</code></td><td>Единицы памяти в сводке и в таблице</td></tr>
+            <tr><td><code>I</code></td><td>Shift+I: считать %CPU от всех ядер, а не от одного</td></tr>
+            <tr><td><code>l</code> <code>t</code> <code>m</code></td><td>Спрятать или переключить строку load average, строки задач и процессора, строки памяти (t и m умеют рисовать графики)</td></tr>
+            <tr><td><code>z</code> <code>x</code> <code>b</code></td><td>Цвет, подсветка колонки сортировки, жирный шрифт</td></tr>
+            <tr><td><code>W</code></td><td>Сохранить настройки в <code>~/.config/procps/toprc</code></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div>
+        <h3>Как запускать</h3>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Команда</th><th>Зачем</th></tr></thead>
+          <tbody>
+            <tr><td><code>top</code></td><td>Обычный запуск, обновление раз в 3 секунды</td></tr>
+            <tr><td><code>top -d 1</code></td><td>Обновлять каждую секунду</td></tr>
+            <tr><td><code>top -u postgres</code></td><td>Только процессы пользователя postgres</td></tr>
+            <tr><td><code>top -p 1342</code></td><td>Следить за одним процессом. Несколько: <code>-p 1342,811</code></td></tr>
+            <tr><td><code>top -H -p 1342</code></td><td>Потоки одного процесса</td></tr>
+            <tr><td><code>top -o %MEM</code></td><td>Сразу сортировать по памяти</td></tr>
+            <tr><td><code>top -c</code></td><td>Сразу с полными командами</td></tr>
+            <tr><td><code>top -1</code></td><td>Сразу по ядрам</td></tr>
+            <tr><td><code>top -E g</code></td><td>Сводка памяти сразу в GiB</td></tr>
+            <tr><td><code>top -b -n 1</code></td><td>Один снимок текстом, без интерактива: для скрипта или отчёта</td></tr>
+            <tr><td><code>top -b -n 1 &gt; top.txt</code></td><td>Сохранить снимок в файл</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="ref-story">
+    <div class="eyebrow">Читаем экран целиком</div>
+    <h2>Что происходит на этом сервере</h2>
+    <p class="sec-lead">Частое задание на собесе: «Посмотри на экран и расскажи, что видишь». Вот порядок, в котором стоит рассуждать вслух.</p>
+    <ol class="story">
+      <li><div><p><strong>Нагрузка.</strong> Load average 2.31, 1.87, 1.42 на двух ядрах. Очередь небольшая, но растёт: справа налево числа увеличиваются.</p><button class="show" data-show="la">Показать на экране</button></div></li>
+      <li><div><p><strong>Процессор.</strong> us 37.9 — работают программы. id 41.6 — запас ещё есть. wa 8.8 — часть очереди ждёт не процессор, а диск.</p><button class="show" data-show="cpu-wa">Показать на экране</button></div></li>
+      <li><div><p><strong>Кто ждёт диск.</strong> postgres с PID 2874 в состоянии D читает базу для бэкапа. Бэкап запустил cron: bash, под ним pg_dump и gzip. gzip запущен с nice 10 и уступает процессор.</p><button class="show" data-show="st-D">Показать на экране</button></div></li>
+      <li><div><p><strong>Кто грузит процессор.</strong> report-api: 70% одного ядра и 1.1 GiB памяти, больше всех на сервере.</p><button class="show" data-show="col-cpu" data-pid="1342">Показать на экране</button></div></li>
+      <li><div><p><strong>Память.</strong> avail Mem 1512.6 MiB — запас есть. Но в swap уже 276.7 MiB, и поток ядра kswapd0 тратит процессор: был момент, когда памяти не хватало.</p><button class="show" data-show="mem-avail">Показать на экране</button></div></li>
+      <li><div><p><strong>Зомби.</strong> Два curl, их родитель — python3 с PID 2207, он не забирает код выхода своих детей. Пока не вредно, но скрипт report-sync надо чинить.</p><button class="show" data-show="st-Z">Показать на экране</button></div></li>
+      <li><div><p><strong>Остановленные.</strong> vim свернули через Ctrl+Z и забыли. report-cli стоит в отладчике gdb: кто-то разбирается с ошибкой прямо на сервере.</p><button class="show" data-show="tasks-stopped">Показать на экране</button></div></li>
+      <li><div><p><strong>Соседи по хосту.</strong> st 0.5 — гипервизор почти не отбирает время у нашей виртуальной машины.</p><button class="show" data-show="cpu-st">Показать на экране</button></div></li>
+    </ol>
+    <div class="verdict"><strong>Вывод.</strong> Сервер справляется. Очередь в основном создаёт бэкап в рабочее время, его лучше перенести на ночь. Отдельно стоит исправить report-sync, чтобы он не плодил зомби, и проверить, хватает ли памяти для report-api.</div>
+  </section>
+
+  <section id="ref-qa">
+    <div class="eyebrow">Собеседование</div>
+    <h2>Вопросы, которые задают по этому экрану</h2>
+    <p class="sec-lead">Вопросы из списка курса для сдачи темы Linux и те, что обычно добавляют, когда показывают top.</p>
+    <div class="qa" id="qa"></div>
+  </section>
+
+  <p class="note">Экран собран для урока. На живом сервере зомби, остановленные процессы и процесс в D редко бывают одновременно, а строки с 0.0 %CPU обычно уходят за нижний край экрана. Формат строк, ширина колонок и правила подсчёта такие же, как у top в Ubuntu 24.04: это сверено на настоящей системе.</p>
+  <footer>ProstoDevops · Linux · разбор экрана top</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+var W = 104;                 // ширина терминала в символах
+var MEM_TOTAL = 4009164;     // KiB
+
+var S = {
+  clock:"14:32:07", up:"up 12 days,  3:41", users:"2 users", la:["2.31","1.87","1.42"],
+  tasks:{total:187, running:3, sleeping:180, stopped:2, zombie:2},
+  cpu:{us:37.9, sy:6.4, ni:4.2, id:41.6, wa:8.8, hi:0.0, si:0.6, st:0.5},
+  cpus:[{us:64.2, sy:7.9, ni:0.0, id:14.6, wa:11.6, hi:0.0, si:1.0, st:0.7},
+        {us:11.6, sy:4.9, ni:8.4, id:68.6, wa:6.0, hi:0.0, si:0.2, st:0.3}],
+  mem:{total:4009164, free:191898, used:2460262, cache:1628467},
+  swap:{total:2097148, free:1813811, used:283337},
+  avail:1548902
+};
+
+// pid, user, PR, NI, VIRT, RES, SHR (KiB), S, %CPU, TIME+, comm, cmdline, ppid
+var PROCS = [
+  P(1342,"report",20,0,2783412,1102368,28416,"R",70.0,"412:07.33","report-api","/opt/report-api/bin/report-api --config /etc/report-api/config.yml",1,
+    "Приложение, ради которого стоит сервер. Сейчас занимает 70% одного ядра и держит в памяти 1.1 GiB — больше всех на сервере."),
+  P(2874,"postgres",20,0,226412,31604,26880,"D",9.0,"0:52.66","postgres","postgres: 16/main: backup reportdb [local] COPY",811,
+    "Процесс PostgreSQL, который обслуживает pg_dump: читает с диска таблицы базы reportdb. Ждёт диск, поэтому стоит в D. Из-за него растут wa и load average."),
+  P(2873,"backup",30,10,7012,2048,1792,"R",8.3,"0:41.27","gzip","gzip -c",2869,
+    "Сжимает дамп базы на лету: pg_dump передаёт данные в gzip. Запущен с nice 10, поэтому PR 30, а его процессорное время идёт в ni, а не в us."),
+  P(2872,"backup",20,0,25748,13312,10496,"S",3.0,"0:17.80","pg_dump","pg_dump reportdb",2869,
+    "Делает резервную копию базы reportdb. Сам почти не работает: ждёт данные от postgres."),
+  P(1021,"www-data",20,0,57712,9472,4864,"S",2.7,"18:32.04","nginx","nginx: worker process",1019,
+    "Рабочий процесс nginx: принимает HTTP-запросы и передаёт их в report-api. Работает от пользователя www-data."),
+  P(97,"root",20,0,0,0,0,"S",1.0,"3:12.48","kswapd0",null,2,
+    "Поток ядра, который освобождает память: выбрасывает кэш и выносит страницы в swap, когда свободной памяти мало. Раз он заметно тратит процессор, памяти впритык."),
+  P(3120,"ubuntu",20,0,11916,5632,3456,"R",1.0,"0:02.15","top","top",3045,
+    "Сам top. Он всегда есть в списке и всегда в R: в момент снимка он сам и работает."),
+  P(402,"root",19,-1,64244,21504,20352,"S",0.7,"2:04.91","systemd-journal","/usr/lib/systemd/systemd-journald",1,
+    "journald, собирает логи. Настоящее имя systemd-journald длиннее 15 символов, поэтому в COMMAND оно обрезано. Работает с nice −1."),
+  P(14,"root",20,0,0,0,0,"S",0.3,"0:48.10","ksoftirqd/0",null,2,
+    "Поток ядра, который разбирает программные прерывания (в основном сетевые пакеты) на ядре 0, когда их много. Его время видно в si."),
+  P(811,"postgres",20,0,224160,30208,28160,"S",0.3,"4:27.66","postgres","/usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/16/main -c config_file=/etc/postgresql/16/main/postgresql.conf",1,
+    "Главный процесс PostgreSQL. На каждое подключение он запускает отдельный процесс, как 2874 для pg_dump."),
+  P(3044,"ubuntu",20,0,14972,7040,5248,"S",0.3,"0:01.82","sshd","sshd: ubuntu@pts/0",3001,
+    "Наша SSH-сессия pts/0. В ней запущен этот top."),
+  P(1,"root",20,0,22412,13440,9344,"S",0.0,"1:42.18","systemd","/sbin/init",0,
+    "PID 1, первый процесс системы. Запускает службы и подбирает осиротевшие процессы. Когда у зомби умирает родитель, systemd забирает его код выхода."),
+  P(2,"root",20,0,0,0,0,"S",0.0,"0:00.21","kthreadd",null,0,
+    "PID 2, родитель всех потоков ядра. У потоков ядра нет памяти в пространстве пользователя, поэтому VIRT, RES и SHR у них нули."),
+  P(8,"root",0,-20,0,0,0,"I",0.0,"0:00.00","kworker/0:0H-events_highpri",null,2,
+    "Рабочий поток ядра на ядре 0. H в имени — high priority, поэтому NI −20 и PR 0. Сейчас ему нечего делать, поэтому состояние I."),
+  P(15,"root",20,0,0,0,0,"I",0.0,"1:05.37","rcu_preempt",null,2,
+    "Поток ядра для механизма RCU, это способ синхронизации внутри ядра. Сейчас простаивает, поэтому I."),
+  P(16,"root","rt",0,0,0,0,"S",0.0,"0:03.02","migration/0",null,2,
+    "Поток ядра, который переносит задачи между ядрами процессора. Работает с приоритетом реального времени, поэтому в PR стоит rt."),
+  P(1019,"root",20,0,55840,6528,4992,"S",0.0,"0:00.04","nginx","nginx: master process /usr/sbin/nginx -g daemon on; master_process on;",1,
+    "Главный процесс nginx. Работает от root, читает конфиг и запускает рабочие процессы от www-data."),
+  P(1105,"root",20,0,7340,2816,2560,"S",0.0,"0:02.37","cron","/usr/sbin/cron -f -P",1,
+    "Демон cron. Это он запустил скрипт бэкапа."),
+  P(1150,"root",20,0,12020,8064,6912,"S",0.0,"0:00.52","sshd","sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups",1,
+    "Главный процесс SSH-сервера: слушает порт 22 и на каждое подключение запускает свои процессы."),
+  P(2207,"report",20,0,32460,18816,6912,"S",0.0,"0:03.11","python3","/usr/bin/python3 /opt/report-sync/sync.py",1,
+    "Скрипт report-sync. Запускает curl и не забирает их код выхода, поэтому под ним два зомби. Чинить надо его."),
+  P(2231,"report",20,0,0,0,0,"Z",0.0,"0:00.02","curl","[curl] <defunct>",2207,
+    "Завершившийся curl. Его код выхода так и не забрал родитель — python3 с PID 2207. Памяти у зомби уже нет, поэтому VIRT, RES и SHR нули."),
+  P(2240,"report",20,0,0,0,0,"Z",0.0,"0:00.01","curl","[curl] <defunct>",2207,
+    "Второй завершившийся curl того же родителя, python3 с PID 2207."),
+  P(2869,"backup",20,0,7748,3712,3328,"S",0.0,"0:00.01","bash","/bin/bash /opt/backup/pg-backup.sh",1105,
+    "Скрипт бэкапа, его запустил cron. Ждёт, пока закончат pg_dump и gzip."),
+  P(2940,"root",20,0,14604,8960,7552,"S",0.0,"0:00.03","sshd","sshd: ubuntu [priv]",1150,
+    "Привилегированная часть второй SSH-сессии пользователя ubuntu."),
+  P(2981,"ubuntu",20,0,14972,6912,5120,"S",0.0,"0:00.41","sshd","sshd: ubuntu@pts/1",2940,
+    "Вторая SSH-сессия пользователя ubuntu, pts/1. Поэтому в первой строке 2 users."),
+  P(2982,"ubuntu",20,0,9268,5376,3584,"S",0.0,"0:00.09","bash","-bash",2981,
+    "Оболочка во второй сессии. Из неё запущен gdb."),
+  P(2988,"ubuntu",20,0,98412,61440,22016,"S",0.0,"0:00.84","gdb","gdb --args /opt/report-api/bin/report-cli export --month 2026-09",2982,
+    "Отладчик. Запустил report-cli и остановил его на точке останова."),
+  P(2990,"ubuntu",20,0,9480,3584,3200,"t",0.0,"0:00.01","report-cli","/opt/report-api/bin/report-cli export --month 2026-09",2988,
+    "Утилита выгрузки отчётов, остановлена отладчиком gdb, поэтому t. Продолжит работу, когда в gdb скажут continue."),
+  P(3001,"root",20,0,14604,8960,7552,"S",0.0,"0:00.02","sshd","sshd: ubuntu [priv]",1150,
+    "Привилегированная часть первой SSH-сессии."),
+  P(3045,"ubuntu",20,0,9268,5504,3584,"S",0.0,"0:00.11","bash","-bash",3044,
+    "Оболочка в первой сессии. Из неё запущены vim и top."),
+  P(3088,"ubuntu",20,0,24660,11264,6784,"T",0.0,"0:00.09","vim","vim /etc/nginx/sites-available/report.conf",3045,
+    "Редактор, в котором правили конфиг nginx, а потом нажали Ctrl+Z. Висит остановленным, вернуть его можно командой fg.")
+];
+function P(pid,user,pr,ni,virt,res,shr,s,cpu,time,comm,cmd,ppid,story){
+  return {pid:pid,user:user,pr:pr,ni:ni,virt:virt,res:res,shr:shr,s:s,cpu:cpu,time:time,comm:comm,cmd:cmd,kt:cmd===null,ppid:ppid,story:story};
+}
+function byPid(pid){ for(var i=0;i<PROCS.length;i++){ if(PROCS[i].pid===+pid) return PROCS[i]; } return null; }
+
+var USERS = {
+  root:"суперпользователь. От root работают systemd, потоки ядра и главные процессы служб.",
+  report:"служебный пользователь приложения. Под отдельным пользователем приложение не может испортить чужие файлы.",
+  postgres:"служебный пользователь PostgreSQL.",
+  backup:"служебный пользователь для резервного копирования.",
+  "www-data":"служебный пользователь веб-сервера в Debian и Ubuntu, от него работают рабочие процессы nginx.",
+  ubuntu:"обычный пользователь, под которым мы зашли по SSH."
+};
+
+/* ---------- форматирование, как в top ---------- */
+var UNITS = ["KiB","MiB","GiB","TiB","PiB","EiB"];
+var SFX = ["","m","g","t","p","e"];
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function rep(c,n){ return n>0 ? new Array(n+1).join(c) : ""; }
+function padL(s,n){ s=String(s); return rep(" ",n-s.length)+s; }
+function padR(s,n){ s=String(s); return s+rep(" ",n-s.length); }
+function scaleMem(kib,width,target){
+  var n=kib;
+  for(var i=0;i<5;i++){
+    if(i>=target){
+      var s = i===0 ? String(Math.round(n)) : n.toFixed(1)+SFX[i];
+      if(s.length<=width) return s;
+    }
+    n/=1024;
+  }
+  return "?";
+}
+function sumNum(kib){
+  var u=state.sumUnit;
+  if(u===0) return String(kib);
+  return (kib/Math.pow(1024,u)).toFixed(1);
+}
+function memPct(p){ return (p.res/MEM_TOTAL*100).toFixed(1); }
+function tsec(t){ var a=t.split(":"); return (+a[0])*60+parseFloat(a[1]); }
+
+/* ---------- состояние экрана ---------- */
+var DEFAULT = {perCpu:false, cmd:false, sort:"cpu", rev:false, active:false, forest:false, sumUnit:1, taskUnit:0};
+var state = copy(DEFAULT);
+function copy(o){ var r={}; for(var k in o) r[k]=o[k]; return r; }
+
+/* ---------- словарь объяснений ---------- */
+var D = {};
+function def(k,o){ D[k]=o; }
+
+def("top",{label:"top -",name:"Первая строка — то же, что выводит uptime",
+  say:"Первая строка — сводка как у команды <code>uptime</code>: текущее время, сколько сервер работает, сколько открыто сеансов и load average.",
+  more:"<p>Слово <code>top</code> — просто имя программы. Строку можно спрятать клавишей <code>l</code>.</p>",cmd:["uptime"]});
+def("clock",{label:"14:32:07",name:"Текущее время на сервере",
+  say:"Текущее время сервера в его часовом поясе.",
+  more:"<p>Обновляется вместе с экраном, по умолчанию раз в 3 секунды. По нему удобно сверяться с логами: «в 14:32 load был 2.31».</p>",cmd:["date","timedatectl"]});
+def("uptime",{label:"up 12 days,  3:41",name:"Аптайм — сколько сервер работает без перезагрузки",
+  say:"Сервер работает 12 дней 3 часа 41 минуту с последней загрузки.",
+  more:"<p>Формат: дни, потом часы:минуты. Если сервер загрузился недавно, будет <code>up 7 min</code>. Число берётся из <code>/proc/uptime</code>.</p>",
+  warn:"Аптайм несколько минут, а перезагрузку никто не делал — значит сервер упал или его перезапустили. Смотри список загрузок и журнал прошлой загрузки.",
+  cmd:["uptime -s","journalctl --list-boots","journalctl -b -1 -e"]});
+def("users",{label:"2 users",name:"Сколько открыто сеансов входа",
+  say:"Сколько сейчас открыто сеансов: SSH-подключений и терминалов. Это не число разных людей.",
+  more:"<p>Один человек в двух окнах SSH — это 2. Здесь пользователь ubuntu зашёл дважды: в одной сессии открыт top, в другой работает gdb. Службы вроде nginx и postgres сюда не входят. В контейнере обычно <code>0 user</code>: туда никто не входит через login.</p>",
+  cmd:["who","w"]});
+def("la",{label:"load average",name:"Средняя нагрузка за 1, 5 и 15 минут",
+  say:"Средняя длина очереди за 1, 5 и 15 минут: сколько задач выполняется или ждёт процессор, плюс задачи, которые ждут диск в состоянии D. Это не проценты, число сравнивают с количеством ядер.",
+  more:"<p>Ядро считает процессы в состояниях <b>R</b> (работает или ждёт ядро) и <b>D</b> (непрерываемое ожидание, обычно диск или сетевое хранилище).</p><p>На этом сервере 2 ядра. Load 2.0 — ядра заняты целиком, но очереди нет. Load 4.0 — на каждое ядро ещё по одной ждущей задаче.</p><p>Три числа читают как тренд, справа налево: 1.42 за 15 минут, 1.87 за 5, 2.31 за последнюю минуту. Нагрузка растёт.</p><p>Строго говоря, это не простое среднее, а сглаженное: свежие секунды весят больше старых.</p>",
+  warn:"Load высокий, а процессор в строке <code>%Cpu(s)</code> почти свободен (большой <code>id</code>, заметный <code>wa</code>) — очередь не к процессору, а к диску. Ищи процессы в состоянии D.",
+  cmd:["nproc","uptime","cat /proc/loadavg"]});
+def("la1",{label:"2.31",name:"Load average за 1 минуту",
+  say:"Средняя очередь за последнюю минуту — самое свежее значение, быстро реагирует на всплески.",
+  more:"<p>На 2 ядрах 2.31 — чуть больше, чем ядра успевают: небольшая очередь есть. Сейчас её создают report-api, бэкап (gzip и postgres в D) и сам top.</p>"});
+def("la5",{label:"1.87",name:"Load average за 5 минут",
+  say:"Средняя очередь за 5 минут.",
+  more:"<p>Сравни с соседями: 1.42 → 1.87 → 2.31. Каждое следующее число больше, значит нагрузка росла последние 15 минут. Здесь это совпадает с запуском бэкапа по cron.</p>"});
+def("la15",{label:"1.42",name:"Load average за 15 минут",
+  say:"Средняя очередь за 15 минут, самое сглаженное значение.",
+  more:"<p>Если число за 1 минуту больше, чем за 15, нагрузка растёт. Если меньше — спадает: пик уже прошёл.</p>"});
+
+def("tasks",{label:"Tasks:",name:"Сколько процессов и в каком они состоянии",
+  say:"Строка про процессы: сколько всего и сколько в каждом состоянии.",
+  more:"<p>Четыре числа справа в сумме дают total: 3 + 180 + 2 + 2 = 187. Клавиша <code>H</code> переключает на потоки, тогда строка начинается с <code>Threads:</code>.</p>"});
+def("tasks-total",{label:"187 total",name:"Всего процессов",
+  say:"Всего процессов в системе, вместе с потоками ядра.",
+  more:"<p>На экране только верх списка, остальные процессы ниже края. Листать: стрелки вверх и вниз, PageUp и PageDown.</p>"});
+def("tasks-running",{label:"3 running",name:"Работают или ждут процессор",
+  say:"Процессы в состоянии R: выполняются на ядре или стоят к нему в очереди.",
+  more:"<p>Здесь это report-api, gzip из бэкапа и сам top. Top всегда видит себя running: в момент снимка он сам и работает.</p>"});
+def("tasks-sleeping",{label:"180 sleeping",name:"Спят и ждут события",
+  say:"Спящие процессы: ждут запроса, таймера, данных с диска. Почти все процессы на сервере спят, это нормально.",
+  more:"<p>Сюда попадают три буквы: <b>S</b> (обычный сон), <b>D</b> (ждёт диск и не слышит сигналов) и <b>I</b> (простаивающие потоки ядра). Отдельного счётчика для D в этой строке нет, его видно только в колонке <code>S</code>.</p>"});
+def("tasks-stopped",{label:"2 stopped",name:"Остановлены",
+  say:"Остановленные процессы: T — остановлен сигналом или через Ctrl+Z, t — остановлен отладчиком.",
+  more:"<p>Здесь это vim, который свернули через Ctrl+Z, и report-cli, остановленный в gdb. Процесс жив, но не выполняется, пока его не продолжат.</p>"});
+def("tasks-zombie",{label:"2 zombie",name:"Зомби",
+  say:"Процессы, которые уже завершились, но родитель ещё не забрал их код выхода.",
+  more:"<p>Здесь два зомби curl. Родитель обоих — python3 с PID 2207, скрипт report-sync: он запускает curl и не вызывает wait.</p>",
+  warn:"Пара зомби — не авария. Если их сотни и число растёт, у родителя ошибка, и рано или поздно закончатся номера PID."});
+
+def("cpu",{label:"%Cpu(s):",name:"Куда уходит время процессора",
+  say:"Как процессор тратил время за последний интервал обновления, в процентах. Буква s значит «все ядра вместе». Восемь чисел в сумме дают 100.",
+  more:"<p>Интервал по умолчанию — 3 секунды. Клавиша <code>1</code> покажет отдельную строку на каждое ядро. Данные берутся из <code>/proc/stat</code>.</p><p>Сумма %CPU всех процессов примерно равна (us + sy + ni) × число ядер. Здесь (37.9 + 6.4 + 4.2) × 2 ≈ 97, а в таблице 70.0 + 9.0 + 8.3 + … ≈ 96.6.</p>",
+  cmd:["vmstat 1","mpstat -P ALL 1"]});
+def("cpu-n",{label:"%Cpu0  :",name:"Строка одного ядра",
+  say:"После нажатия 1 top показывает каждое ядро отдельно. Ядра нумеруются с нуля.",
+  more:"<p>Здесь ядро 0 занято почти целиком (us 64.2): там работает report-api. Ядро 1 в основном простаивает. Если одно ядро на 100%, а остальные свободны, обычно это однопоточная программа, и добавлять ядра бесполезно.</p>"});
+def("cpu-us",{label:"us",name:"user — код программ",
+  say:"Время, когда процессор выполнял код программ, а не ядра. Высокий us — приложение много считает.",
+  more:"<p>Здесь 37.9% — в основном report-api. Код программ с повышенным nice сюда не входит, он считается в <code>ni</code>.</p>",
+  warn:"Высокий us — смотри, кто наверху при сортировке по %CPU (так по умолчанию, клавиша <code>P</code>)."});
+def("cpu-sy",{label:"sy",name:"system — работа ядра",
+  say:"Время в ядре: системные вызовы, файловые системы, сеть, драйверы, переключение процессов.",
+  more:"<p>Обычно sy заметно меньше us. Здесь 6.4% — нормально.</p>",
+  warn:"sy больше us — программа слишком часто обращается к ядру: мелкие чтения и записи, много соединений, частый запуск процессов."});
+def("cpu-ni",{label:"ni",name:"nice — программы с пониженным приоритетом",
+  say:"Время на код программ, которым понизили приоритет: nice больше нуля.",
+  more:"<p>Здесь 4.2% — это gzip из бэкапа, у него NI 10. Его специально запустили «вежливым», чтобы он уступал процессор report-api.</p>"});
+def("cpu-id",{label:"id",name:"idle — простой",
+  say:"Процессор ничего не делал.",
+  more:"<p>41.6% простоя на 2 ядрах — примерно 0,8 ядра свободно. Значит, процессор не забит до конца, и load 2.31 объясняется не только им.</p>"});
+def("cpu-wa",{label:"wa",name:"iowait — простой в ожидании диска",
+  say:"Процессор простаивал, и при этом были задачи, которые ждут ввода-вывода, обычно диска. Это не нагрузка на процессор, а простой.",
+  more:"<p>Здесь 8.8%: postgres читает таблицы для бэкапа и стоит в состоянии D.</p>",
+  warn:"Высокий wa — проблема в диске, а не в процессоре. Искать тяжёлый процесс по %CPU бесполезно: смотри загрузку диска и кто его читает или пишет.",
+  cmd:["iostat -x 1","iotop -o"]});
+def("cpu-hi",{label:"hi",name:"hardware interrupts — аппаратные прерывания",
+  say:"Время на обработку аппаратных прерываний: сигналов от сетевой карты, диска, таймера.",
+  more:"<p>Обычно около нуля, как здесь.</p>"});
+def("cpu-si",{label:"si",name:"software interrupts — программные прерывания",
+  say:"Отложенная обработка прерываний, в первую очередь входящих сетевых пакетов.",
+  more:"<p>Этим занимается ядро, в том числе потоки <code>ksoftirqd/N</code>, по одному на ядро. Здесь 0.6% — немного.</p>",
+  warn:"Высокий si на одном ядре — много сетевого трафика, и разбирает его одно ядро.",cmd:["cat /proc/softirqs"]});
+def("cpu-st",{label:"st",name:"steal — время, отобранное гипервизором",
+  say:"Наша виртуальная машина хотела работать, а гипервизор отдал физическое ядро другим машинам. Бывает только на виртуалках.",
+  more:"<p>Здесь 0.5% — соседи по хосту почти не мешают.</p>",
+  warn:"st 5–10% и выше изнутри ВМ не лечится. Это соседи на физическом хосте или тариф с частичной долей ядра (например, в Yandex Cloud гарантированная доля vCPU 20 или 50%). Помогает другой тип ВМ или тариф."});
+
+def("mem",{label:"MiB Mem :",name:"Оперативная память",
+  say:"Строка про оперативную память: всего, свободно, занято и кэш. Единицы здесь — MiB.",
+  more:"<p>MiB — мебибайт: 1 MiB = 1024 × 1024 байт. Клавиша <code>E</code> переключает единицы сводки: KiB, MiB, GiB и дальше. Числа берутся из <code>/proc/meminfo</code>, те же видно в <code>free -m</code>.</p>",
+  cmd:["free -m","cat /proc/meminfo"]});
+def("mem-total",{label:"total",name:"Вся память",
+  say:"Вся оперативная память, которую видит ядро.",
+  more:"<p>3915.2 MiB — чуть меньше 4 ГиБ: часть при загрузке забрали ядро и прошивка.</p>"});
+def("mem-free",{label:"free",name:"Свободная память",
+  say:"Память, которая вообще ничем не занята. Маленькое число — это нормально: Linux занимает свободную память кэшем файлов. Запас смотрят в avail Mem.",
+  more:"<p>Здесь 187.4 MiB из 3915.2, и это не тревога. Пустая память ничего не ускоряет, поэтому ядро держит в ней кэш и отдаёт его программам по первому требованию.</p>"});
+def("mem-used",{label:"used",name:"Занятая память",
+  say:"Память, которую нельзя быстро отдать. В этой версии top used = total − avail Mem.",
+  more:"<p>3915.2 − 1512.6 = 2402.6. Поэтому free + used + buff/cache здесь больше total: часть кэша, которую нельзя быстро освободить, посчитана и в used, и в buff/cache.</p><p>В top из Ubuntu 22.04 и старше (procps-ng 3) used считался как total − free − buff/cache, и числа складывались ровно. Если на собесе спросят «почему не сходится» — ответ здесь.</p>"});
+def("mem-cache",{label:"buff/cache",name:"Буферы и кэш файлов",
+  say:"Память под кэш: недавно прочитанные и записанные файлы ядро держит в RAM, чтобы не ходить на диск ещё раз. Когда программам нужна память, большая часть кэша освобождается.",
+  more:"<p>Сюда же входит освобождаемая часть внутренних кэшей ядра (SReclaimable).</p>",
+  warn:"Сбрасывать кэш, «чтобы стало больше free», — плохая идея: диск начнёт работать чаще, а настоящая проблема никуда не денется."});
+def("swap",{label:"MiB Swap:",name:"Подкачка",
+  say:"Swap — место на диске, куда ядро выносит редко используемые страницы памяти, когда RAM не хватает.",
+  more:"<p>Диск во много раз медленнее памяти, поэтому swap — запас на пиковую нагрузку, а не добавка к RAM.</p>",
+  cmd:["swapon --show","vmstat 1"]});
+def("swap-total",{label:"total",name:"Размер swap",
+  say:"Сколько всего места под подкачку.",more:"<p>2048.0 MiB — файл или раздел подкачки на 2 ГиБ.</p>"});
+def("swap-free",{label:"free",name:"Свободно в swap",
+  say:"Сколько места в swap ещё свободно."});
+def("swap-used",{label:"used.",name:"Занято в swap",
+  say:"Сколько страниц памяти сейчас лежит в swap. Само по себе не авария: туда могли уехать давно не используемые страницы.",
+  more:"<p>Точка после used — не опечатка. Так top отделяет следующее число, avail Mem, которое к swap не относится.</p><p>Здесь занято 276.7 MiB, а поток ядра kswapd0 тратит процессор — памяти было впритык.</p>",
+  warn:"Плохо, когда страницы постоянно ходят на диск и обратно: в <code>vmstat 1</code> колонки si и so не нулевые. Тогда серверу не хватает памяти."});
+def("mem-avail",{label:"avail Mem",name:"Сколько памяти реально доступно",
+  say:"Сколько памяти можно отдать новым программам, не залезая в swap: свободная плюс кэш, который можно быстро освободить. Главное число про запас памяти.",
+  more:"<p>Стоит в строке Swap просто по месту, но относится к оперативной памяти. Здесь 1512.6 MiB — запас есть.</p>"});
+def("msg",{label:"пустая строка",name:"Строка сообщений",
+  say:"Пустая строка между сводкой и таблицей — сюда top пишет вопросы и подсказки.",
+  more:"<p>Нажмёшь <code>k</code> — появится <code>PID to signal/kill [default pid = 1342]</code>. Нажмёшь <code>r</code> — <code>PID to renice</code>. Здесь же top пишет об ошибках ввода.</p>"});
+
+def("col-pid",{label:"PID",name:"Номер процесса",
+  say:"Уникальный номер процесса. По нему процессу посылают сигналы, например <code>kill 1342</code>.",
+  more:"<p>PID 1 — systemd, его ядро запускает первым. PID 2 — kthreadd, родитель потоков ядра. Номера выдаются по возрастанию, а после максимума начинаются сначала.</p>",
+  cmd:["ps -p 1342 -o pid,ppid,cmd","pstree -p"],
+  row:function(p){ return "PID "+p.pid+". "+p.story; }});
+def("col-user",{label:"USER",name:"Пользователь процесса",
+  say:"От чьего имени работает процесс. От этого зависит, к каким файлам у него есть доступ.",
+  more:"<p>Службы обычно работают под своими пользователями: nginx — www-data, PostgreSQL — postgres. Если службу взломают, она испортит только то, к чему есть доступ у её пользователя. Клавиша <code>u</code> в top показывает процессы одного пользователя.</p>",
+  cmd:["top -u postgres"],
+  row:function(p){ return "<b>"+esc(p.user)+"</b> — "+USERS[p.user]; }});
+def("col-pr",{label:"PR",name:"Приоритет для планировщика",
+  say:"Приоритет процесса, как его видит ядро. У обычных процессов PR = 20 + NI. Меньше число — выше приоритет. rt — реальное время.",
+  more:"<p>NI 0 даёт PR 20, NI 10 — PR 30, NI −20 — PR 0.</p><p><code>rt</code> — процесс реального времени (политика SCHED_FIFO или SCHED_RR) с самым высоким приоритетом 99. Такие процессы вытесняют любые обычные. Отрицательный PR, например −51, — тоже реальное время, но с приоритетом пониже.</p><p>В <code>ps</code> приоритет считается по-другому, колонку PRI оттуда с PR не сравнивай.</p>",
+  cmd:["chrt -p 16"],
+  row:function(p){ return p.pr==="rt" ? "rt — процесс реального времени с самым высоким приоритетом. Он вытеснит любой обычный процесс." : "PR "+p.pr+" = 20 + NI ("+fmtNi(p.ni)+")."; }});
+def("col-ni",{label:"NI",name:"Nice — уступчивость процесса",
+  say:"Nice от −20 до 19, по умолчанию 0. Чем больше nice, тем охотнее процесс уступает процессор другим. Сделать процесс скромнее может его владелец, дать ему больше приоритета — только root.",
+  more:"<p>Запустить с пониженным приоритетом: <code>nice -n 10 команда</code>. Изменить у работающего процесса: <code>renice -n 10 -p PID</code> или клавиша <code>r</code> в top.</p><p>Время процессов с nice больше нуля считается в <code>ni</code>, а не в <code>us</code>.</p>",
+  cmd:["nice -n 10 gzip big.sql","renice -n 10 -p 2873"],
+  row:function(p){ return niNote(p.ni); }});
+def("col-virt",{label:"VIRT",name:"Виртуальная память",
+  say:"Весь объём адресного пространства процесса: код, библиотеки, куча, отображённые файлы и память, которую процесс зарезервировал, но ещё не трогал. Сама по себе почти ничего не говорит.",
+  more:"<p>VIRT почти всегда сильно больше RES. У Java- и Go-сервисов VIRT в гигабайтах при скромном RES — обычное дело.</p><p>Числа в колонках памяти — в KiB. Клавиша <code>e</code> переключает единицы.</p>",
+  row:function(p){ return memNote(p,"virt"); }});
+def("col-res",{label:"RES",name:"Резидентная память — сколько реально в RAM",
+  say:"Сколько памяти процесса прямо сейчас лежит в оперативной памяти. Главная колонка, когда ищешь, кто съел память.",
+  more:"<p>Сортировка по памяти — клавиша <code>M</code>. Если число не помещается в колонку, top сам переводит его в бо́льшие единицы: <code>1.1g</code> у report-api — это 1,1 GiB.</p><p>RES включает общую часть (SHR). Поэтому сумма RES всех процессов обычно больше, чем used: одна и та же библиотека посчитана у каждого процесса.</p>",
+  cmd:["ps aux --sort=-rss"],
+  row:function(p){ return memNote(p,"res"); }});
+def("col-shr",{label:"SHR",name:"Общая память",
+  say:"Часть RES, которую процесс может делить с другими: библиотеки, разделяемая память, страницы файлов.",
+  more:"<p>У процессов postgres SHR почти равна RES: это общий буфер базы (shared_buffers), один на все процессы PostgreSQL.</p>",
+  row:function(p){ return memNote(p,"shr"); }});
+def("col-s",{label:"S",name:"Состояние процесса",
+  say:"Одна буква — что процесс делает прямо сейчас: R работает, S спит, D ждёт диск, I простаивающий поток ядра, T остановлен, t остановлен отладчиком, Z зомби.",
+  more:"<p>Нажми на букву в любой строке — будет разбор именно этого процесса. На этом экране есть все буквы.</p>"});
+def("col-cpu",{label:"%CPU",name:"Загрузка процессора процессом",
+  say:"Сколько процессорного времени процесс занял за последний интервал, в процентах от одного ядра. 100% — одно ядро целиком.",
+  more:"<p>На 2 ядрах максимум 200%, на 16 — 1600%. Поэтому 100% у процесса на 16-ядерном сервере — одно ядро из 16, а не перегрузка сервера.</p><p>Shift+I переключает режим: %CPU делится на число ядер и не превышает 100%.</p>",
+  cmd:["ps aux --sort=-%cpu","pidstat 1"],
+  row:function(p){ return p.cpu===0 ? "0.0 — за последний интервал процесс не тратил процессор." : p.cpu.toFixed(1)+"% одного ядра: процесс работал "+Math.round(p.cpu*3/100*10)/10+" с из 3-секундного интервала."; }});
+def("col-mem",{label:"%MEM",name:"Доля памяти",
+  say:"RES процесса в процентах от всей оперативной памяти.",
+  more:"<p>У report-api 1.1 GiB из 3.8 GiB — 27.5%.</p>",
+  row:function(p){ return p.res+" KiB из "+MEM_TOTAL+" KiB = "+memPct(p)+"%."; }});
+def("col-time",{label:"TIME+",name:"Сколько процессора процесс потратил за жизнь",
+  say:"Суммарное процессорное время за всю жизнь процесса, в формате минуты:секунды.сотые. Это не время с момента запуска.",
+  more:"<p>412:07.33 у report-api — 412 минут 7,33 секунды чистой работы процессора, почти 7 часов за 12 дней. Плюс в названии значит, что показаны сотые доли. Сортировка по этой колонке — клавиша <code>T</code>.</p>",
+  row:function(p){ return timeNote(p.time); }});
+def("col-cmd",{label:"COMMAND",name:"Имя программы",
+  say:"Имя программы процесса. Клавиша c показывает полную командную строку с аргументами.",
+  more:"<p>Короткое имя ядро хранит до 15 символов, поэтому systemd-journald показан как <code>systemd-journal</code>. В режиме <code>c</code> потоки ядра показаны в квадратных скобках, а у зомби видна пометка <code>&lt;defunct&gt;</code>. Если команда не влезает в ширину экрана, top обрезает её и ставит <code>+</code>.</p>",
+  cmd:["ps -o cmd= -p 1342"],
+  row:function(p){ return p.story+(p.kt ? " Это поток ядра, полной командной строки у него нет." : "<br>Полная команда: <code>"+esc(p.cmd)+"</code>"); }});
+
+def("st-R",{label:"R",name:"R — running, работает",
+  say:"Процесс выполняется на ядре или стоит к нему в очереди. Учитывается в load average.",
+  more:"<p>Top выделяет такие строки жирным. Если R-процессов постоянно больше, чем ядер, процессор не справляется.</p>",
+  row:function(p){ return p.story; }});
+def("st-S",{label:"S",name:"S — interruptible sleep, обычный сон",
+  say:"Процесс спит и ждёт события: запроса, таймера, данных из сети. Сигнал его будит. Самое частое состояние.",
+  more:"<p>Почти все процессы на сервере в S: веб-сервер ждёт запросов, база ждёт подключений. Это нормально.</p>",
+  row:function(p){ return p.story; }});
+def("st-D",{label:"D",name:"D — uninterruptible sleep, ждёт диск",
+  say:"Непрерываемый сон: процесс внутри ядра ждёт завершения ввода-вывода, обычно диска или сетевого хранилища. Сигналы не обрабатывает, даже kill -9 сработает только после окончания операции. Учитывается в load average.",
+  more:"<p>Короткие появления D — норма для любого процесса, который читает диск.</p>",
+  warn:"Много процессов в D, load высокий, а процессор свободен — проблема с диском или NFS. Колонка WCHAN (включается клавишей <code>f</code>) покажет, где в ядре процесс ждёт.",
+  cmd:["iostat -x 1","ps -eo pid,stat,wchan:32,cmd","dmesg -T"],
+  row:function(p){ return p.story; }});
+def("st-I",{label:"I",name:"I — idle, простаивающий поток ядра",
+  say:"Поток ядра, которому сейчас нечего делать. В load average не учитывается. У обычных программ такой буквы не бывает.",
+  more:"<p>Буква появилась в ядре 4.14. До этого такие потоки показывались как D, и это путало: казалось, что они ждут диск.</p>",
+  row:function(p){ return p.story; }});
+def("st-T",{label:"T",name:"T — stopped, остановлен",
+  say:"Процесс остановлен сигналом: Ctrl+Z в терминале или kill -STOP. Он жив, но не выполняется. Продолжить: fg, bg или kill -CONT.",
+  more:"<p>Ctrl+Z посылает SIGTSTP, <code>kill -STOP</code> — SIGSTOP. Второй сигнал процесс не может перехватить или проигнорировать, как и SIGKILL.</p>",
+  cmd:["jobs","fg","kill -CONT 3088"],
+  row:function(p){ return p.story; }});
+def("st-t",{label:"t",name:"t — остановлен отладчиком",
+  say:"Процесс остановлен отладчиком на точке останова: gdb, strace или другим инструментом, который использует ptrace.",
+  more:"<p>Продолжит работу, когда отладчик скажет continue или отключится. На сервере такое встречается редко — обычно кто-то разбирается с ошибкой.</p>",
+  row:function(p){ return p.story; }});
+def("st-Z",{label:"Z",name:"Z — zombie",
+  say:"Процесс уже завершился, память и файлы освобождены, но в таблице процессов осталась запись с кодом выхода. Её должен забрать родитель вызовом wait(). kill -9 зомби не убьёт — он уже мёртв.",
+  more:"<p>Когда процесс завершается, ядро посылает родителю сигнал SIGCHLD. Нормальный родитель вызывает wait и забирает код выхода. Если родитель этого не делает, копятся зомби.</p><p>Что делать: найти родителя и починить, перезапустить или завершить его. Когда родитель умрёт, зомби достанется systemd (PID 1), и тот сразу его уберёт. Можно попробовать послать родителю SIGCHLD, но помогает это не всегда.</p>",
+  cmd:["ps -o ppid= -p 2231","ps -eo pid,ppid,stat,cmd","kill -CHLD 2207"],
+  row:function(p){ return p.story; }});
+
+def("key-1",{label:"1",name:"Каждое ядро отдельно",
+  say:"Клавиша 1 показывает загрузку каждого ядра отдельной строкой.",
+  more:"<p>Видно, если одно ядро занято на 100%, а остальные свободны: однопоточная программа упёрлась в одно ядро. Нажми ещё раз — вернётся общая строка.</p>"});
+def("key-c",{label:"c",name:"Полная команда",
+  say:"Клавиша c показывает полную командную строку вместо имени программы.",
+  more:"<p>Помогает различить одинаковые имена: несколько python3, java или postgres. Посмотри на postgres: теперь видно, какой из них главный, а какой обслуживает pg_dump. Потоки ядра — в квадратных скобках, у зомби пометка &lt;defunct&gt;.</p>"});
+def("key-P",{label:"P",name:"Сортировка по %CPU",
+  say:"Shift+P — сортировка по загрузке процессора. Так top сортирует по умолчанию."});
+def("key-M",{label:"M",name:"Сортировка по памяти",
+  say:"Shift+M — сортировка по памяти (%MEM, то есть по RES). Первое, что нажимать, если ищешь, кто съел память."});
+def("key-N",{label:"N",name:"Сортировка по PID",
+  say:"Shift+N — сортировка по номеру процесса, сначала самые новые."});
+def("key-T",{label:"T",name:"Сортировка по TIME+",
+  say:"Shift+T — сортировка по суммарному времени процессора: кто больше всех потратил за всю жизнь."});
+def("key-R",{label:"R",name:"Обратный порядок",
+  say:"Shift+R переворачивает сортировку: по возрастанию вместо убывания."});
+def("key-i",{label:"i",name:"Только активные",
+  say:"Клавиша i скрывает процессы, которые не тратили процессор за последний интервал. Остаются только те, кто работает."});
+def("key-V",{label:"V",name:"Дерево процессов",
+  say:"Shift+V показывает процессы деревом: дети под родителями.",
+  more:"<p>Сразу видно, кто кого запустил: зомби curl — дети python3, а pg_dump и gzip запустил скрипт из cron. Любая клавиша сортировки выключает дерево.</p>"});
+def("key-E",{label:"E",name:"Единицы в сводке памяти",
+  say:"Shift+E меняет единицы в строках Mem и Swap: KiB → MiB → GiB → TiB → PiB → EiB и по кругу."});
+def("key-e",{label:"e",name:"Единицы в таблице",
+  say:"Клавиша e меняет единицы в колонках VIRT, RES и SHR: KiB → MiB → GiB → TiB → PiB."});
+
+function fmtNi(n){ return n<0 ? "−"+(-n) : String(n); }
+function niNote(n){
+  if(n===0) return "NI 0 — значение по умолчанию.";
+  if(n>0) return "NI "+n+" — процесс уступает процессор другим. Так запускают фоновые задачи: <code>nice -n "+n+" команда</code>.";
+  if(n===-20) return "NI −20 — самый высокий приоритет, какой можно задать через nice.";
+  return "NI "+fmtNi(n)+" — чуть выше обычного приоритета. Отрицательный nice может поставить только root.";
+}
+function memNote(p,f){
+  var kib=p[f];
+  if(kib===0) return p.s==="Z" ? "Ноль: зомби уже освободил всю память." : "Ноль: у потока ядра нет памяти в пространстве пользователя.";
+  var mib=kib/1024, s=kib+" KiB ≈ "+mib.toFixed(1)+" MiB";
+  if(mib>=1024) s+=" ≈ "+(mib/1024).toFixed(2)+" GiB";
+  var shown=scaleMem(kib,f==="virt"?7:6,state.taskUnit);
+  if(state.taskUnit===0 && /[a-z]$/.test(shown)) s+=". Число не влезло в колонку, поэтому top сам показал его как <code>"+shown+"</code>";
+  return s+".";
+}
+function timeNote(t){
+  var sec=tsec(t), h=Math.floor(sec/3600), m=Math.floor(sec%3600/60), s=(sec%60).toFixed(2).replace(".",",");
+  var parts=[]; if(h) parts.push(h+" ч"); if(m) parts.push(m+" мин"); parts.push(s+" с");
+  return t+" — процессор работал на этот процесс "+parts.join(" ")+" за всю его жизнь.";
+}
+
+/* ---------- сборка экрана ---------- */
+function tok(html,k,extra){ return '<span class="t'+(extra&&extra.cls?" "+extra.cls:"")+'" data-k="'+k+'"'+(extra&&extra.pid!=null?' data-pid="'+extra.pid+'"':"")+(extra&&extra.col?' data-col="'+extra.col+'"':"")+">"+html+"</span>"; }
+function fld(num,w,label,k){ num=String(num); return rep(" ",w-num.length)+tok("<b>"+esc(num)+"</b> "+esc(label),k); }
+function ln(html,cls){ return '<span class="ln'+(cls?" "+cls:"")+'">'+html+"</span>"; }
+
+function line1(){
+  return tok("top","top")+" - "+tok(S.clock,"clock")+" "+tok(esc(S.up),"uptime")+",  "+tok(S.users,"users")+",  "+
+    tok("load average:","la")+" "+tok(S.la[0],"la1")+", "+tok(S.la[1],"la5")+", "+tok(S.la[2],"la15");
+}
+function line2(){
+  var t=S.tasks;
+  return tok("Tasks:","tasks")+fld(t.total,4,"total","tasks-total")+","+fld(t.running,4,"running","tasks-running")+","+
+    fld(t.sleeping,4,"sleeping","tasks-sleeping")+","+fld(t.stopped,4,"stopped","tasks-stopped")+","+fld(t.zombie,4,"zombie","tasks-zombie");
+}
+var CPUF=["us","sy","ni","id","wa","hi","si","st"];
+function cpuLine(label,lk,c){
+  var h=tok(esc(label),lk);
+  for(var i=0;i<CPUF.length;i++){ h+=fld(c[CPUF[i]].toFixed(1),5,CPUF[i],"cpu-"+CPUF[i])+(i<CPUF.length-1?",":" "); }
+  return h;
+}
+function memLine(){
+  var u=UNITS[state.sumUnit], m=S.mem;
+  return tok(u+" Mem :","mem")+fld(sumNum(m.total),9,"total","mem-total")+","+fld(sumNum(m.free),9,"free","mem-free")+","+
+    fld(sumNum(m.used),9,"used","mem-used")+","+fld(sumNum(m.cache),9,"buff/cache","mem-cache");
+}
+function swapLine(){
+  var u=UNITS[state.sumUnit], s=S.swap;
+  return tok(u+" Swap:","swap")+fld(sumNum(s.total),9,"total","swap-total")+","+fld(sumNum(s.free),9,"free","swap-free")+","+
+    fld(sumNum(s.used),9,"used.","swap-used")+fld(sumNum(S.avail),9,"avail Mem","mem-avail");
+}
+var COLS=[
+  {k:"col-pid",h:"PID",w:7,r:true},{k:"col-user",h:"USER",w:8},{k:"col-pr",h:"PR",w:3,r:true},{k:"col-ni",h:"NI",w:3,r:true},
+  {k:"col-virt",h:"VIRT",w:7,r:true},{k:"col-res",h:"RES",w:6,r:true},{k:"col-shr",h:"SHR",w:6,r:true},{k:"col-s",h:"S",w:1},
+  {k:"col-cpu",h:"%CPU",w:5,r:true},{k:"col-mem",h:"%MEM",w:5,r:true},{k:"col-time",h:"TIME+",w:9,r:true},{k:"col-cmd",h:"COMMAND",w:0}
+];
+function headerLine(){
+  var h="", len=0;
+  for(var i=0;i<COLS.length;i++){
+    var c=COLS[i], pad=c.w ? c.w-c.h.length : 0;
+    if(i) { h+=" "; len++; }
+    if(c.r){ h+=rep(" ",pad)+tok(c.h,c.k); } else { h+=tok(c.h,c.k)+rep(" ",pad); }
+    len+=Math.max(c.w,c.h.length);
+  }
+  return h+rep(" ",W-len);
+}
+function cellVals(p){
+  var u=state.taskUnit;
+  return [String(p.pid), p.user, String(p.pr), String(p.ni), scaleMem(p.virt,7,u), scaleMem(p.res,6,u), scaleMem(p.shr,6,u),
+          p.s, p.cpu.toFixed(1), memPct(p), p.time];
+}
+function cmdText(p){
+  if(!state.cmd) return p.comm;
+  return p.kt ? "["+p.comm+"]" : p.cmd;
+}
+function rowLine(p,depth){
+  var v=cellVals(p), h="", pref=W-72;
+  for(var i=0;i<11;i++){
+    var c=COLS[i], val=v[i], key = i===7 ? "st-"+val : c.k, ex={pid:p.pid,col:c.k};
+    if(i) h+=" ";
+    if(c.r){ h+=rep(" ",c.w-val.length)+tok(esc(val),key,ex); } else { h+=tok(esc(val),key,ex)+rep(" ",c.w-val.length); }
+  }
+  var lead="";
+  if(depth>0) lead=rep(" ",1+4*(depth-1))+"`- ";
+  var txt=cmdText(p), avail=pref-lead.length;
+  if(txt.length>avail) txt=txt.slice(0,avail-1)+"+";
+  h+=" "+lead+tok(esc(txt),"col-cmd",{pid:p.pid,col:"col-cmd"});
+  return ln(h, p.s==="R"?"row run":"row");
+}
+function orderedProcs(){
+  var list=PROCS.slice();
+  if(state.active) list=list.filter(function(p){ return p.cpu>0; });
+  if(state.forest){
+    var ids={}; list.forEach(function(p){ ids[p.pid]=true; });
+    var kids={}; list.forEach(function(p){ var pp=ids[p.ppid]?p.ppid:"root"; (kids[pp]=kids[pp]||[]).push(p); });
+    for(var k in kids) kids[k].sort(function(a,b){ return a.pid-b.pid; });
+    var out=[];
+    (function walk(id,d){ (kids[id]||[]).forEach(function(p){ out.push({p:p,d:d}); walk(p.pid,d+1); }); })("root",0);
+    return out;
+  }
+  var key={cpu:function(p){return p.cpu;},mem:function(p){return p.res;},pid:function(p){return p.pid;},time:function(p){return tsec(p.time);}}[state.sort];
+  list.sort(function(a,b){ return (key(b)-key(a)) || (a.pid-b.pid); });
+  if(state.rev) list.reverse();
+  return list.map(function(p){ return {p:p,d:0}; });
+}
+function buildScreen(){
+  var out=[ln(line1()), ln(line2())];
+  if(state.perCpu){ out.push(ln(cpuLine("%Cpu0  :","cpu-n",S.cpus[0]))); out.push(ln(cpuLine("%Cpu1  :","cpu-n",S.cpus[1]))); }
+  else out.push(ln(cpuLine("%Cpu(s):","cpu",S.cpu)));
+  out.push(ln(memLine())); out.push(ln(swapLine()));
+  out.push(ln(tok(rep(" ",W),"msg",{cls:"msg"})));
+  out.push(ln(headerLine(),"hdr"));
+  orderedProcs().forEach(function(r){ out.push(rowLine(r.p,r.d)); });
+  return out.join("");
+}
+
+/* ---------- элементы страницы ---------- */
+var screen=document.getElementById("screen"), scroller=document.getElementById("scroll"), card=document.getElementById("card"),
+    term=document.getElementById("term"), keysEl=document.getElementById("keys"), statusEl=document.getElementById("status");
+var mode="learn", selected=null, quiz=null, quizN=0, recent=[];
+var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function render(){
+  screen.innerHTML=buildScreen();
+  applyMarks();
+  renderStatus();
+  renderKeys();
+}
+function clearCls(c){ var a=screen.querySelectorAll("."+c); for(var i=0;i<a.length;i++) a[i].classList.remove(c); }
+function q(k,pid){ return screen.querySelectorAll('[data-k="'+k+'"]'+(pid!=null?'[data-pid="'+pid+'"]':"")); }
+function applyMarks(){
+  clearCls("sel"); clearCls("hl"); clearCls("quiz");
+  if(selected && selected.k.indexOf("key-")!==0){
+    var a=q(selected.k,selected.pid);
+    if(!a.length && selected.pid!=null) a=q(selected.k,null);
+    for(var i=0;i<a.length;i++) a[i].classList.add("sel");
+    if(/^col-/.test(selected.k) && selected.pid==null){
+      var c=screen.querySelectorAll('[data-col="'+selected.k+'"]');
+      for(var j=0;j<c.length;j++) c[j].classList.add("hl");
+    }
+  }
+  if(mode==="quiz" && quiz && !quiz.revealed){
+    var e=q(quiz.k,quiz.pid)[0]; if(e) e.classList.add("quiz");
+  }
+}
+function revealEl(el){
+  if(!el) return;
+  var sl=scroller.scrollLeft, w=scroller.clientWidth, x=el.offsetLeft, ew=el.offsetWidth;
+  if(x<sl+16 || x+ew>sl+w-16) scroller.scrollLeft=Math.max(0,x-w/3);
+}
+
+/* карточка */
+function cardFor(k,pid){
+  var d=D[k]; if(!d) return "";
+  var p=pid!=null?byPid(pid):null, h="";
+  h+='<div class="card-eyebrow"><span class="chip mono">'+esc(d.label)+"</span>"+(p?'<span class="chip">PID '+p.pid+" · "+esc(p.comm)+"</span>":"")+"</div>";
+  h+='<h3 class="card-title">'+d.name+"</h3>";
+  if(p && d.row) h+='<div class="here"><div class="lbl">В этой строке</div><p>'+d.row(p)+"</p></div>";
+  h+='<div class="say"><div class="lbl">Как ответить на собесе</div><p>'+d.say+"</p></div>";
+  if(d.more) h+='<div class="more">'+d.more+"</div>";
+  if(d.warn) h+='<div class="warn"><div class="lbl">Когда насторожиться</div><p>'+d.warn+"</p></div>";
+  if(d.cmd) h+='<div class="cmds"><div class="lbl">Где ещё посмотреть</div>'+d.cmd.map(function(c){ return "<code>"+esc(c)+"</code>"; }).join("")+"</div>";
+  return h;
+}
+function introCard(){
+  return '<div class="card-eyebrow"><span class="chip">Как пользоваться</span></div>'+
+    '<h3 class="card-title">Нажми на любое место экрана</h3>'+
+    "<p>Цифра, буква, слово, заголовок колонки, буква состояния в строке — здесь появится объяснение и короткий ответ для собеседования.</p>"+
+    "<p>Начать можно с самых частых вопросов:</p>"+
+    '<div class="btns"><button class="btn mono" data-show="la">load average</button><button class="btn mono" data-show="st-Z">Z</button><button class="btn mono" data-show="st-D">D</button><button class="btn mono" data-show="cpu-wa">wa</button><button class="btn mono" data-show="mem-avail">avail Mem</button><button class="btn mono" data-show="col-res">RES</button></div>'+
+    '<p class="small">Во вкладке «Тренажёр» экран сам подсвечивает место, а ты отвечаешь, что это, — как на собесе.</p>';
+}
+function quizCard(){
+  if(!quiz) return "";
+  var h="";
+  if(!quiz.revealed){
+    h+='<div class="card-eyebrow"><span class="chip">Тренажёр · вопрос '+quizN+"</span></div>"+
+      '<h3 class="card-title">Что это?</h3>'+
+      "<p>Собеседующий показывает на подсвеченное место на экране. Ответь вслух, потом проверь себя.</p>"+
+      '<div class="btns"><button class="btn primary" id="q-reveal">Показать ответ</button><button class="btn" id="q-next">Другой вопрос</button></div>';
+  } else {
+    h+=cardFor(quiz.k,quiz.pid)+'<div class="btns"><button class="btn primary" id="q-next">Следующий вопрос</button></div>';
+  }
+  return h;
+}
+function renderCard(){
+  var x='<div class="sheet-x"><button class="btn" id="sheet-close">Закрыть</button></div>';
+  if(mode==="quiz") card.innerHTML=x+quizCard();
+  else card.innerHTML = selected ? x+cardFor(selected.k,selected.pid) : introCard();
+  card.scrollTop=0;
+  // на узком экране карточка выезжает снизу только когда есть что показать
+  card.classList.toggle("hide", mode==="learn" && !selected);
+}
+
+function select(k,pid){
+  selected={k:k,pid:pid==null?null:+pid};
+  applyMarks(); renderCard();
+}
+
+/* тренажёр */
+function nextQuiz(){
+  var els=screen.querySelectorAll(".t[data-k]"), byKey={}, keys=[];
+  for(var i=0;i<els.length;i++){
+    var k=els[i].getAttribute("data-k");
+    if(!D[k] || k==="msg") continue;
+    if(!byKey[k]){ byKey[k]=[]; keys.push(k); }
+    byKey[k].push(els[i]);
+  }
+  var pool=keys.filter(function(k){ return recent.indexOf(k)<0; });
+  if(!pool.length){ recent=[]; pool=keys; }
+  var k=pool[Math.floor(Math.random()*pool.length)], list=byKey[k], el=list[Math.floor(Math.random()*list.length)];
+  recent.push(k); if(recent.length>20) recent.shift();
+  var pid=el.getAttribute("data-pid");
+  quizN++; quiz={k:k,pid:pid==null?null:+pid,revealed:false};
+  selected=null; applyMarks(); renderCard(); revealEl(el);
+}
+function setMode(m){
+  mode=m;
+  document.getElementById("mode-learn").setAttribute("aria-pressed",m==="learn");
+  document.getElementById("mode-quiz").setAttribute("aria-pressed",m==="quiz");
+  document.getElementById("mode-hint").textContent = m==="learn" ? "Нажимай на цифры, буквы и слова на экране" : "Экран подсвечивает место — назови, что это";
+  if(m==="quiz"){ quizN=0; nextQuiz(); } else { quiz=null; applyMarks(); renderCard(); }
+}
+
+/* клавиши */
+var KEYS=[
+  {k:"1",t:"ядра"},{k:"c",t:"команды"},{k:"P",t:"по %CPU"},{k:"M",t:"по памяти"},{k:"N",t:"по PID"},{k:"T",t:"по TIME+"},
+  {k:"R",t:"обратно"},{k:"i",t:"активные"},{k:"V",t:"дерево"},{k:"E",t:"сводка"},{k:"e",t:"таблица"}
+];
+function keyPressed(k){
+  switch(k){
+    case "1": return state.perCpu; case "c": return state.cmd; case "i": return state.active; case "V": return state.forest;
+    case "R": return state.rev && !state.forest;
+    case "P": return !state.forest && state.sort==="cpu"; case "M": return !state.forest && state.sort==="mem";
+    case "N": return !state.forest && state.sort==="pid"; case "T": return !state.forest && state.sort==="time";
+  }
+  return false;
+}
+function renderKeys(){
+  var h='<div class="keys-title">Клавиши top: нажми, и экран поменяется, как в настоящем. Когда экран в фокусе, можно жать и на клавиатуре.</div>';
+  KEYS.forEach(function(x){
+    var cap=x.t;
+    if(x.k==="E") cap="сводка: "+UNITS[state.sumUnit];
+    if(x.k==="e") cap="таблица: "+UNITS[state.taskUnit];
+    var pressable = !(x.k==="E"||x.k==="e");
+    h+='<button class="key" data-key="'+x.k+'"'+(pressable?' aria-pressed="'+keyPressed(x.k)+'"':"")+"><kbd>"+x.k+"</kbd><span>"+cap+"</span></button>";
+  });
+  h+='<button class="key reset" data-key="reset">Сбросить</button>';
+  keysEl.innerHTML=h;
+}
+function renderStatus(){
+  var names={cpu:"%CPU",mem:"%MEM",pid:"PID",time:"TIME+"};
+  var s = state.forest ? "Дерево процессов" : "Сортировка: "+names[state.sort]+(state.rev?" по возрастанию":" по убыванию");
+  s+=" · память: сводка в "+UNITS[state.sumUnit]+", таблица в "+UNITS[state.taskUnit];
+  if(state.active) s+=" · только активные";
+  statusEl.textContent=s;
+}
+function press(k){
+  switch(k){
+    case "1": state.perCpu=!state.perCpu; break;
+    case "c": state.cmd=!state.cmd; break;
+    case "P": state.sort="cpu"; state.forest=false; break;
+    case "M": state.sort="mem"; state.forest=false; break;
+    case "N": state.sort="pid"; state.forest=false; break;
+    case "T": state.sort="time"; state.forest=false; break;
+    case "R": state.rev=!state.rev; state.forest=false; break;
+    case "i": state.active=!state.active; break;
+    case "V": state.forest=!state.forest; break;
+    case "E": state.sumUnit=(state.sumUnit+1)%6; break;
+    case "e": state.taskUnit=(state.taskUnit+1)%5; break;
+    case "reset": state=copy(DEFAULT); break;
+    default: return false;
+  }
+  var focused=document.activeElement && document.activeElement.getAttribute ? document.activeElement.getAttribute("data-key") : null;
+  render();
+  if(focused){ var fb=keysEl.querySelector('[data-key="'+focused+'"]'); if(fb) fb.focus(); }
+  if(mode==="learn"){
+    if(k==="reset"){ selected=null; renderCard(); }
+    else { selected={k:"key-"+k,pid:null}; applyMarks(); renderCard(); }
+  } else if(quiz && !q(quiz.k,quiz.pid).length){ nextQuiz(); }
+  else { renderCard(); }
+  return true;
+}
+
+/* показать из разбора */
+function showOnScreen(k,pid){
+  if(mode!=="learn") setMode("learn");
+  if(k==="cpu-n" && !state.perCpu){ state.perCpu=true; render(); }
+  if(k==="cpu" && state.perCpu){ state.perCpu=false; render(); }
+  if(state.active){ state.active=false; render(); }
+  if(k.indexOf("key-")===0){ press(k.slice(4)); }
+  else {
+    if(/^st-/.test(k) && pid==null){ var f=q(k,null)[0]; if(f) pid=f.getAttribute("data-pid"); }
+    select(k,pid);
+  }
+  var stage=document.getElementById("stage");
+  if(stage.getBoundingClientRect().top<0 || stage.getBoundingClientRect().top>window.innerHeight*0.5)
+    stage.scrollIntoView({behavior:reduce?"auto":"smooth",block:"start"});
+  var el=screen.querySelector(".t.sel"); revealEl(el);
+}
+
+/* события */
+screen.addEventListener("click",function(e){
+  var t=e.target.closest(".t"); if(!t) return;
+  var k=t.getAttribute("data-k"), pid=t.getAttribute("data-pid");
+  if(mode==="quiz"){
+    if(quiz){ quiz={k:k,pid:pid==null?null:+pid,revealed:true}; applyMarks(); renderCard(); }
+    return;
+  }
+  select(k,pid);
+});
+screen.addEventListener("mouseover",function(e){
+  var t=e.target.closest(".ln.hdr .t"); if(!t) return;
+  var c=screen.querySelectorAll('[data-col="'+t.getAttribute("data-k")+'"]');
+  for(var i=0;i<c.length;i++) c[i].classList.add("hl");
+});
+screen.addEventListener("mouseout",function(e){
+  var t=e.target.closest(".ln.hdr .t"); if(!t) return;
+  if(selected && selected.k===t.getAttribute("data-k") && selected.pid==null) return;
+  var c=screen.querySelectorAll('[data-col="'+t.getAttribute("data-k")+'"]');
+  for(var i=0;i<c.length;i++) c[i].classList.remove("hl");
+});
+keysEl.addEventListener("click",function(e){
+  var b=e.target.closest("[data-key]"); if(b) press(b.getAttribute("data-key"));
+});
+term.addEventListener("keydown",function(e){
+  if(e.metaKey||e.ctrlKey||e.altKey) return;
+  if(e.key.length===1 && press(e.key)) e.preventDefault();
+});
+document.getElementById("mode-learn").addEventListener("click",function(){ setMode("learn"); });
+document.getElementById("mode-quiz").addEventListener("click",function(){ setMode("quiz"); });
+card.addEventListener("click",function(e){
+  if(e.target.id==="q-reveal"){ quiz.revealed=true; applyMarks(); renderCard(); var el=q(quiz.k,quiz.pid)[0]; if(el){ el.classList.add("sel"); } }
+  else if(e.target.id==="q-next"){ nextQuiz(); }
+  else if(e.target.id==="sheet-close"){ if(mode==="quiz") setMode("learn"); else { selected=null; applyMarks(); renderCard(); } }
+});
+if("IntersectionObserver" in window){
+  new IntersectionObserver(function(en){ card.classList.toggle("away", !en[0].isIntersecting); }).observe(document.getElementById("stage"));
+}
+document.addEventListener("click",function(e){
+  var b=e.target.closest("[data-show]"); if(!b) return;
+  showOnScreen(b.getAttribute("data-show"), b.getAttribute("data-pid"));
+});
+
+/* ---------- разбор ниже экрана ---------- */
+function itemHTML(k){
+  var d=D[k];
+  var h='<article class="item"><div class="item-head"><code class="lab">'+esc(d.label)+"</code><h3>"+d.name+'</h3><button class="show" data-show="'+k+'">Показать на экране</button></div>';
+  h+='<p class="say-t">'+d.say+"</p>";
+  if(d.more) h+='<div class="more">'+d.more+"</div>";
+  if(d.warn) h+='<p class="warn-t"><strong>Когда насторожиться.</strong> '+d.warn+"</p>";
+  if(d.cmd) h+='<p class="cmd-t">'+d.cmd.map(function(c){ return "<code>"+esc(c)+"</code>"; }).join(" ")+"</p>";
+  return h+"</article>";
+}
+var GROUPS=[
+  {t:"Строка 1. Время, аптайм, сеансы, load average",line:line1,keys:["top","clock","uptime","users","la","la1","la5","la15"]},
+  {t:"Строка 2. Процессы по состояниям",line:line2,keys:["tasks","tasks-total","tasks-running","tasks-sleeping","tasks-stopped","tasks-zombie"]},
+  {t:"Строка 3. Процессор",line:function(){ return cpuLine("%Cpu(s):","cpu",S.cpu); },keys:["cpu","cpu-us","cpu-sy","cpu-ni","cpu-id","cpu-wa","cpu-hi","cpu-si","cpu-st","cpu-n"]},
+  {t:"Строки 4 и 5. Память и swap",line:function(){ return memLine()+"</span>"+'<span class="ln">'+swapLine(); },keys:["mem","mem-total","mem-free","mem-used","mem-cache","swap","swap-total","swap-free","swap-used","mem-avail"]},
+  {t:"Строка 6. Пустая",line:function(){ return " "; },keys:["msg"]}
+];
+function renderRef(){
+  var h="";
+  GROUPS.forEach(function(g){
+    h+='<h3 class="grp-title">'+g.t+"</h3>";
+    h+='<div class="strip"><span class="ln">'+g.line()+"</span></div>";
+    h+='<div class="items">'+g.keys.map(itemHTML).join("")+"</div>";
+  });
+  document.getElementById("ref-lines").innerHTML=h;
+  document.getElementById("strip-cols").innerHTML='<span class="ln hdr">'+headerLine().replace(/\s+$/,"")+"</span>";
+  document.getElementById("items-cols").innerHTML=COLS.map(function(c){ return itemHTML(c.k); }).join("");
+  document.getElementById("items-states").innerHTML=["st-R","st-S","st-D","st-I","st-T","st-t","st-Z"].map(itemHTML).join("");
+  var QA=[
+    ["Что показывает load average? Что значит 4.0 2.0 1.0 на сервере с двумя CPU?","Средняя длина очереди к процессору за 1, 5 и 15 минут: задачи в R и в D. Это не проценты. 4.0 на двух ядрах — на каждое ядро приходится две задачи: одна работает, одна ждёт. Числа читаются справа налево, нагрузка за 15 минут выросла вчетверо. Дальше смотрю строку %Cpu(s): высокий us — упёрлись в процессор, высокий wa — в диск.","la"],
+    ["Какие состояния процесса ты знаешь?","R — работает или ждёт ядро. S — спит и ждёт события. D — непрерываемый сон, обычно ждёт диск. I — простаивающий поток ядра. T — остановлен через Ctrl+Z или SIGSTOP. t — остановлен отладчиком. Z — зомби.","col-s"],
+    ["Что такое зомби и почему его нельзя убить через kill -9?","Процесс уже завершился, от него осталась только запись с кодом выхода, которую должен забрать родитель вызовом wait. Убивать нечего, он уже мёртв. Нужно разбираться с родителем: починить, перезапустить или завершить его. Тогда зомби достанется PID 1, и тот его уберёт.","st-Z"],
+    ["Что такое SIGCHLD и при чём тут зомби?","Когда дочерний процесс завершается, ядро посылает родителю SIGCHLD. Нормальный родитель в ответ вызывает wait и забирает код выхода. Если родитель сигнал игнорирует и wait не вызывает, дети остаются зомби.","st-Z"],
+    ["Что означают us, sy, wa и st?","us — код программ, sy — работа ядра, wa — процессор простаивает, пока задачи ждут диск, st — время, которое гипервизор отдал другим виртуальным машинам. Высокий st внутри ВМ не лечится, это соседи на хосте.","cpu"],
+    ["Почему free маленький? Это плохо?","Нет. Linux занимает свободную память кэшем файлов и отдаёт его программам, когда нужно. Запас памяти показывает avail Mem, а не free.","mem-avail"],
+    ["Почему free + used + buff/cache не равно total?","В новом top used считается как total − avail Mem. Часть кэша, которую нельзя быстро освободить, попадает и в used, и в buff/cache. В старых версиях used считали как total − free − buff/cache, и сумма сходилась.","mem-used"],
+    ["Что такое swap и когда его использование — плохо?","Место на диске, куда ядро выносит редко используемые страницы памяти. Немного занятого swap — нормально. Плохо, когда страницы постоянно ходят туда и обратно: в vmstat колонки si и so не нулевые.","swap-used"],
+    ["Процесс показывает 100% CPU, на сервере 16 ядер. Сервер перегружен?","Нет. В top %CPU считается от одного ядра, 100% — одно ядро из шестнадцати. Стоит нажать 1 и проверить, не однопоточная ли программа упёрлась в одно ядро.","col-cpu"],
+    ["Как найти процесс, который грузит процессор или ест память?","В top: сортировка по %CPU (по умолчанию, клавиша P) или по памяти (M). Без интерактива: ps aux --sort=-%cpu или --sort=-rss. Потом смотрю потоки процесса (top -H -p PID), его логи и что он делает.","col-res"],
+    ["Load высокий, а процессор почти свободен. Почему?","В load average входят процессы в состоянии D, которые ждут диск или сетевое хранилище. Смотрю wa, ищу процессы в D, проверяю диск через iostat -x и сообщения ядра в dmesg.","st-D"],
+    ["Чем VIRT отличается от RES?","VIRT — всё адресное пространство процесса, включая зарезервированное и отображённые файлы. RES — то, что прямо сейчас лежит в оперативной памяти. Кто съел память, смотрят по RES.","col-res"],
+    ["Как понизить приоритет процесса?","Через nice: запустить с nice -n 10 команда или поменять у работающего: renice -n 10 -p PID, в top — клавиша r. Чем больше nice, тем охотнее процесс уступает процессор. Отрицательный nice может поставить только root.","col-ni"],
+    ["Что показывает TIME+?","Сколько процессорного времени процесс потратил за всю жизнь, в минутах, секундах и сотых. Это не время с момента запуска: процесс может работать месяц и потратить пару секунд процессора.","col-time"]
+  ];
+  document.getElementById("qa").innerHTML=QA.map(function(x){
+    return '<article class="q"><h3>'+x[0]+"</h3><p>"+x[1]+'</p><button class="show" data-show="'+x[2]+'">Показать на экране</button></article>';
+  }).join("");
+}
+
+render();
+renderCard();
+renderRef();
+})();
+</script>
+
+</body>
+</html>
