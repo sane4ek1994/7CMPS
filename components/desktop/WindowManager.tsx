@@ -21,7 +21,7 @@ import {
 import { captionRect, setBusy, zoomCaption } from "@/lib/motion";
 import { sounds } from "@/lib/sound";
 
-export type WindowVariant = "explorer" | "document" | "dialog";
+export type WindowVariant = "explorer" | "document" | "dialog" | "game";
 
 export interface WindowMeta {
   id: string;
