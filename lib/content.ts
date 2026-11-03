@@ -6,7 +6,13 @@ import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
 import { extractSummary, renderMarkdown, routeForMarkdownPath } from "./markdown";
-import type { Folder, Material, MaterialKind, Section } from "./types";
+import {
+  DEFAULT_LICENSE,
+  type Folder,
+  type Material,
+  type MaterialKind,
+  type Section,
+} from "./types";
 
 const ROOT = process.cwd();
 const KINDS: MaterialKind[] = ["notes", "slides", "docs", "project"];
@@ -181,6 +187,8 @@ function buildIndex(): ContentIndex {
       summary: str(data.description) ?? extractSummary(parsed.body),
       repo: str(data.repo),
       demo: str(data.demo),
+      license: str(data.license) ?? DEFAULT_LICENSE,
+      source: str(data.source),
     });
     bodies.set(id, parsed);
   }
