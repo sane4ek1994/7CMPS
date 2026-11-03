@@ -51,7 +51,9 @@ function rehypeRepoLinks(options: { filePath: string }) {
     visit(tree, "element", (node: Element, index, parent) => {
       if (node.tagName === "a" && typeof node.properties.href === "string") {
         node.properties.href = resolve(node.properties.href);
-        if (isExternal(node.properties.href)) {
+        // Внешние ссылки и вложения (PDF, интерактивные HTML) открываются в новой вкладке,
+        // чтобы не уводить с рабочего стола кампуса.
+        if (isExternal(node.properties.href) || node.properties.href.startsWith("/files/")) {
           node.properties.target = "_blank";
           node.properties.rel = ["noopener", "noreferrer"];
         }
