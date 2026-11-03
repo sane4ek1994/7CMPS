@@ -1831,3 +1831,354 @@ a:visited {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------------------------------------------------------------- Сапёр */
+
+/* Окно игры подстраивается под размер поля, а не наоборот. */
+.window--game {
+  width: auto;
+  height: auto;
+  max-width: calc(100% - 16px);
+  max-height: calc(100% - 16px);
+  resize: none;
+}
+
+.mines {
+  --cell: 24px;
+  --mines-open: #c0c0c0;
+  --mines-grid: #808080;
+  --mines-1: #0000ff;
+  --mines-2: #005a00;
+  --mines-3: #a00000;
+  --mines-4: #000080;
+  --mines-5: #800000;
+  --mines-6: #005050;
+  --mines-7: #000000;
+  --mines-8: #4a4a4a;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+:root[data-theme="dark"] .mines {
+  --mines-open: #1f2027;
+  --mines-grid: #4a4c58;
+  --mines-1: #8ab4ff;
+  --mines-2: #7fdc8a;
+  --mines-3: #ff8a80;
+  --mines-4: #c3b1ff;
+  --mines-5: #ffb07a;
+  --mines-6: #6fe0e0;
+  --mines-7: #ececf1;
+  --mines-8: #b4b6c2;
+}
+
+.menubar {
+  position: relative;
+  display: flex;
+  padding: 0 0 3px;
+}
+
+.menubar__button {
+  padding: 3px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.menubar__button:hover,
+.menubar__button.is-open {
+  box-shadow: var(--raised-soft);
+}
+
+.menubar__button.is-open {
+  box-shadow: var(--field);
+}
+
+.menubar__menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  min-width: 240px;
+  margin: 0;
+  padding: 3px;
+  list-style: none;
+  background: var(--face);
+  box-shadow: var(--raised);
+}
+
+.menubar__menu [role="separator"] {
+  height: 0;
+  margin: 3px 2px;
+  border-top: 1px solid var(--shadow);
+  border-bottom: 1px solid var(--highlight);
+}
+
+.menubar__menu button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 5px 10px 5px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menubar__menu button:hover,
+.menubar__menu button:focus-visible {
+  background: var(--select);
+  color: #ffffff;
+  outline: none;
+  box-shadow: none;
+}
+
+.menubar__check {
+  width: 16px;
+  text-align: center;
+}
+
+.menubar__menu kbd,
+.menubar__hint {
+  margin-left: auto;
+  padding-left: 16px;
+  font: inherit;
+  opacity: 0.85;
+}
+
+.mines__frame {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  padding: 6px;
+  box-shadow: var(--raised);
+}
+
+.mines__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 6px;
+  box-shadow: var(--field);
+}
+
+.led {
+  display: block;
+  box-shadow: var(--field);
+}
+
+.led__on {
+  fill: #ff2a1a;
+}
+
+.led__off {
+  fill: #3a0905;
+}
+
+.mines__buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.mines__face,
+.mines__flag-mode {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: var(--face);
+  box-shadow: var(--raised);
+  cursor: pointer;
+}
+
+.mines__face:active,
+.mines__flag-mode[aria-pressed="true"] {
+  box-shadow: var(--pressed);
+}
+
+.mines__flag-mode[aria-pressed="true"] {
+  background-image: repeating-conic-gradient(var(--face) 0 25%, var(--highlight) 0 50%);
+  background-size: 2px 2px;
+}
+
+/* Переключатель «касание ставит флажок» нужен только на сенсорных экранах. */
+@media (hover: hover) and (pointer: fine) {
+  .mines__flag-mode:not([aria-pressed="true"]) {
+    display: none;
+  }
+}
+
+.mines__scroll {
+  align-self: center;
+  max-width: 100%;
+  min-height: 0;
+  overflow: auto;
+  box-shadow: var(--sunken);
+  padding: 3px;
+}
+
+.mines__board {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), var(--cell));
+  width: max-content;
+  margin: 0 auto;
+}
+
+.mines__row,
+.mines__gridcell {
+  display: contents;
+}
+
+.mine-cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--cell);
+  height: var(--cell);
+  padding: 0;
+  border: 0;
+  background: var(--face);
+  box-shadow: var(--raised);
+  color: var(--text);
+  /* Цифры системным жирным шрифтом: в пиксельном 2 и 3 читаются как буквы. */
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: default;
+  touch-action: manipulation;
+}
+
+.mine-cell:not(.is-open):active {
+  box-shadow: inset 1px 1px var(--mines-grid);
+  background: var(--mines-open);
+}
+
+.mines__board.is-lost .mine-cell:active {
+  box-shadow: var(--raised);
+  background: var(--face);
+}
+
+.mine-cell.is-open {
+  background: var(--mines-open);
+  box-shadow: inset 1px 1px var(--mines-grid);
+}
+
+.mine-cell.is-exploded {
+  background: #e00000;
+}
+
+.mine-cell:focus-visible {
+  z-index: 1;
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+  box-shadow: inset 0 0 0 3px var(--text);
+}
+
+.mine-cell__wrong {
+  position: relative;
+  display: grid;
+}
+
+.mine-cell__wrong::before,
+.mine-cell__wrong::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 20px;
+  height: 2px;
+  background: #e00000;
+}
+
+.mine-cell__wrong::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.mine-cell__wrong::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* Мины и флажки нарисованы чёрным: на тёмном поле им нужен светлый контур. */
+:root[data-theme="dark"] .mine-cell svg {
+  filter: drop-shadow(1px 0 0 #c8c9d2) drop-shadow(-1px 0 0 #c8c9d2) drop-shadow(0 1px 0 #c8c9d2)
+    drop-shadow(0 -1px 0 #c8c9d2);
+}
+
+.mine-cell.n1 {
+  color: var(--mines-1);
+}
+.mine-cell.n2 {
+  color: var(--mines-2);
+}
+.mine-cell.n3 {
+  color: var(--mines-3);
+}
+.mine-cell.n4 {
+  color: var(--mines-4);
+}
+.mine-cell.n5 {
+  color: var(--mines-5);
+}
+.mine-cell.n6 {
+  color: var(--mines-6);
+}
+.mine-cell.n7 {
+  color: var(--mines-7);
+}
+.mine-cell.n8 {
+  color: var(--mines-8);
+}
+
+/* Строка состояния и подсказка не растягивают окно: его ширину задаёт поле. */
+.mines .statusbar {
+  width: 0;
+  min-width: 100%;
+  margin-top: 4px;
+}
+
+.mines__help {
+  max-width: 0;
+  min-width: 100%;
+  margin: 6px 0 2px;
+  padding: 0 2px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+@media (max-width: 700px) {
+  .window--game,
+  .window--game.is-maximized {
+    width: auto;
+    height: auto;
+    max-width: none;
+    max-height: none;
+  }
+
+  .mines {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .mines {
+    --cell: 30px;
+  }
+
+  .mines .statusbar {
+    display: flex;
+  }
+}

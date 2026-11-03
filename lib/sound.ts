@@ -208,6 +208,30 @@ function tick(bus: Bus, t: number, v: number) {
   src.stop(t + 0.06);
 }
 
+/** Глухой взрыв: шум, который уходит в низы, и удар по басу. */
+function boom(bus: Bus, t: number, v: number) {
+  const src = bus.ac.createBufferSource();
+  src.buffer = bus.noise;
+  const filter = bus.ac.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.setValueAtTime(1800, t);
+  filter.frequency.exponentialRampToValueAtTime(90, t + 0.9);
+  const gain = bus.ac.createGain();
+  envelope(gain.gain, t, 0.005, v, t + 1.1);
+  src.connect(filter).connect(gain).connect(voice(bus, 0.3));
+  src.start(t);
+  src.stop(t + 1.2);
+
+  const thump = bus.ac.createOscillator();
+  thump.frequency.setValueAtTime(110, t);
+  thump.frequency.exponentialRampToValueAtTime(38, t + 0.4);
+  const thumpGain = bus.ac.createGain();
+  envelope(thumpGain.gain, t, 0.004, v * 0.9, t + 0.5);
+  thump.connect(thumpGain).connect(voice(bus, 0.1));
+  thump.start(t);
+  thump.stop(t + 0.55);
+}
+
 // ---------------------------------------------------------------- Звуки
 
 const hz = (midi: number) => 440 * 2 ** ((midi - 69) / 12);
@@ -273,6 +297,13 @@ const recipes = {
   },
   /** Щелчок переключателя. */
   click: (bus, t) => tick(bus, t, 0.6),
+  /** «Сапёр»: подрыв на мине. */
+  boom: (bus, t) => boom(bus, t, 0.8),
+  /** «Сапёр»: поле разминировано — колокольчики вверх. */
+  win: (bus, t) => {
+    [C5, E5, G5, C6].forEach((f, i) => bell(bus, t + i * 0.11, f, 1.2, 0.18));
+    pad(bus, t + 0.3, [C4, E4, G4], 1.2, 0.2, 0.05);
+  },
 } satisfies Record<string, Recipe>;
 
 export type SoundName = keyof typeof recipes;

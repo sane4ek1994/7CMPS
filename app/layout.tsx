@@ -58,6 +58,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       separatorBefore: true,
     },
     { label: "Репозиторий на GitHub", href: repoUrl, icon: "globe", external: true },
+    { label: "Сапёр", href: "/games/minesweeper/", icon: "mine", separatorBefore: true },
     { label: "О проекте", href: "/about/", icon: "info", separatorBefore: true },
     {
       label: "Заставка «Звёзды»",
