@@ -25,7 +25,13 @@ export interface Material {
   summary: string;
   repo?: string;
   demo?: string;
+  /** Лицензия материала, если она отличается от CC BY-SA 4.0 (например, «все права у автора»). */
+  license: string;
+  /** Ссылка на первоисточник, если материал опубликован где-то ещё. */
+  source?: string;
 }
+
+export const DEFAULT_LICENSE = "CC BY-SA 4.0";
 
 export interface Folder {
   id: string;

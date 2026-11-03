@@ -3,7 +3,7 @@ import { OpenLink, Window } from "@/components/desktop/Window";
 import { PixelIcon } from "@/components/pixel/PixelIcon";
 import { getCohort, getTopic } from "@/lib/content";
 import { formatDate, githubProfile } from "@/lib/format";
-import { KIND_LABELS, type Material } from "@/lib/types";
+import { DEFAULT_LICENSE, KIND_LABELS, type Material } from "@/lib/types";
 import { githubFileUrl } from "@/site.config";
 
 function parentOf(material: Material) {
@@ -104,6 +104,20 @@ export function MaterialView({ material, html }: { material: Material; html: str
                   </dd>
                 </>
               )}
+              {material.source && (
+                <>
+                  <dt>Источник</dt>
+                  <dd>
+                    <ExternalLink href={material.source}>{material.source}</ExternalLink>
+                  </dd>
+                </>
+              )}
+              {material.license !== DEFAULT_LICENSE && (
+                <>
+                  <dt>Лицензия</dt>
+                  <dd>{material.license}</dd>
+                </>
+              )}
               {material.demo && (
                 <>
                   <dt>Демо</dt>
@@ -139,7 +153,7 @@ export function MaterialView({ material, html }: { material: Material; html: str
         </div>
         <div className="statusbar">
           <span>{material.filePath}</span>
-          <span>CC BY-SA 4.0</span>
+          <span>{material.license}</span>
         </div>
       </div>
     </Window>
